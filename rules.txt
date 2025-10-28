@@ -1,0 +1,156 @@
+🎯 But du jeu
+
+Incarnez un monstre géant et devenez le dernier survivant ou le premier à atteindre 20 Points de Victoire (PV).
+
+🎲 Contenu
+
+6 figurines + 6 fiches Monstre (avec roues de Vie ❤️ et de Victoire ⭐)
+
+6 dés noirs + 2 dés verts (bonus)
+
+1 plateau Tokyo (avec Tokyo City et Tokyo Bay)
+
+66 cartes Énergie
+
+50 cubes d’énergie 🔋
+
+Jetons spéciaux (Poison, Mimétisme, etc.)
+
+⚙️ Mise en place
+
+Chaque joueur choisit un monstre et place ses roues sur :
+
+❤️ 10 Points de Vie
+
+⭐ 0 Points de Victoire
+
+Mélangez les cartes Énergie → formez une pioche.
+
+Révélez 3 cartes Énergie face visible.
+
+Placez le plateau Tokyo au centre.
+
+Créez une banque de cubes d’énergie 🔋.
+
+Utilisez :
+
+Tokyo City uniquement à 2–4 joueurs.
+
+Tokyo City + Tokyo Bay à 5–6 joueurs.
+
+Le joueur qui obtient le plus de ⚡ (éclairs) au lancer de dés commence.
+
+🔁 Déroulement d’un tour
+
+Chaque tour suit 5 phases :
+
+1️⃣ Lancer les dés
+
+Vous avez 3 lancers maximum.
+
+Après chaque lancer, gardez ou relancez les dés de votre choix.
+
+Vous pouvez arrêter avant les 3 lancers.
+
+Les symboles finaux indiquent vos actions.
+
+2️⃣ Résoudre les dés
+
+Vous les appliquez dans l’ordre de votre choix :
+
+Symbole	Effet
+1, 2, 3	Gagnez autant de ⭐ que le chiffre du triplé (ex : 3×3 = 3⭐). Chaque dé supplémentaire identique = +1⭐.
+⚡ (Énergie)	Gagnez 1 🔋 cube d’énergie par symbole.
+👊 (Baffe)	Infligez 1❤️ de dégât à tous les monstres dans l’autre zone (Tokyo ↔ extérieur).
+❤️ (Soin)	Gagnez 1❤️ par symbole, si vous n’êtes pas dans Tokyo (interdit dedans).
+
+🩸 Si un monstre tombe à 0❤️ → il est éliminé.
+Ses cartes et cubes sont défaussés.
+
+3️⃣ Entrer dans Tokyo
+
+S’il n’y a personne dans Tokyo, le joueur doit y entrer.
+
+Il place sa figurine sur Tokyo City (ou Tokyo Bay si la première est occupée à 5–6 joueurs).
+
+En entrant, il gagne +1⭐.
+
+S’il commence un tour dans Tokyo, il gagne +2⭐.
+
+Un monstre ne peut fuir Tokyo que lorsqu’il perd des ❤️ à cause d’une attaque 👊.
+
+🧩 Les monstres dans Tokyo ne peuvent pas se soigner (sauf via cartes).
+
+4️⃣ Acheter des cartes Énergie
+
+Dépensez vos 🔋 pour acheter les cartes visibles.
+
+Remplacez-les immédiatement par de nouvelles.
+
+Vous pouvez :
+
+Acheter plusieurs cartes.
+
+Payer 2🔋 pour défausser les 3 cartes visibles et en révéler 3 nouvelles.
+
+Types de cartes :
+
+Pouvoir 🧠 : reste devant vous jusqu’à la fin (effets permanents).
+
+Action ⚡ : effet immédiat, puis défaussée.
+
+5️⃣ Fin du tour
+
+Résolvez les effets "fin de tour" éventuels.
+
+Passez les dés au joueur suivant (sens horaire).
+
+💥 Règles spéciales de Tokyo
+
+Avantages :
+
++1⭐ quand vous entrez.
+
++2⭐ si vous commencez un tour dans Tokyo.
+
+Inconvénients :
+
+Vous êtes la cible de tous les monstres à l’extérieur.
+
+Vous ne pouvez pas regagner de ❤️ avec les dés.
+
+⚠️ Vous pouvez quitter Tokyo uniquement après une attaque 👊.
+
+🏁 Fin de la partie
+
+Le jeu s’arrête immédiatement si :
+
+Un joueur atteint 20⭐ Points de Victoire → il gagne.
+
+Il ne reste qu’un seul monstre vivant → il gagne.
+
+🧩 Précisions et cas particuliers
+
+Si un joueur atteint 20⭐ mais meurt dans le même tour → il perd.
+
+Si tous meurent en même temps → tout le monde perd.
+
+❤️ ne peut dépasser 10 (sauf carte spéciale).
+
+À 5–6 joueurs :
+
+Tokyo City et Tokyo Bay sont actives.
+
+Si le nombre de joueurs descend à 4 ou moins → Tokyo Bay se vide.
+
+🧪 Exemples de cartes spéciales
+
+Mimétisme : copie l’effet d’une carte pouvoir active.
+
+Opportuniste : permet d’acheter en premier les cartes révélées.
+
+Crachat Venimeux / Rayon Réducteur : infligent des jetons permanents.
+
+Souffle de Feu : blesse les monstres à gauche et à droite.
+
+Métamorphose : permet de vendre une carte pouvoir à la fin du tour.
