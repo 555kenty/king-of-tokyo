@@ -8,16 +8,20 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Correction : On charge le fichier de layout complet
         setContentView(R.layout.activity_main)
 
         val playButton = findViewById<Button>(R.id.playButton)
+        val quitButton = findViewById<Button>(R.id.quitButton)
+
         playButton.setOnClickListener {
-            startActivity(Intent(this, CharacterSelectionActivity::class.java))
+            val intent = Intent(this, CharacterSelectionActivity::class.java)
+            startActivity(intent)
         }
 
-        val quitButton = findViewById<Button>(R.id.quitButton)
+
         quitButton.setOnClickListener {
-            finish()
+            finish() // Ferme l'application
         }
     }
 }

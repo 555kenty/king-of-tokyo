@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="120dp"
+    android:layout_height="wrap_content"
+    android:background="@color/hud_background"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/monsterName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/neon_blue"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="Aegis-01" />
+
+    <TextView
+        android:id="@+id/monsterHealth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/heart_red"
+        android:textSize="14sp"
+        tools:text="❤️ 10" />
+
+    <TextView
+        android:id="@+id/monsterEnergy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        tools:text="⚡ 0" />
+
+    <TextView
+        android:id="@+id/monsterVictoryPoints"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        tools:text="⭐ 0" />
+
+</LinearLayout>

@@ -6,4 +6,9 @@
     <color name="black_red">#8B0000</color>
     <color name="silver_toxic_green">#32CD32</color>
     <color name="white">#FFFFFF</color>
+
+    <!-- DA R1 / Neon Blue -->
+    <color name="neon_blue">#4CC8FF</color>
+    <color name="heart_red">#FF4C4C</color>
+    <color name="hud_background">#80000000</color> 
 </resources>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/board_background"
+    tools:context=".GameActivity">
+
+    <!-- Zone TOKYO CITY -->
+
+    <!-- MONSTERS & HUDS -->
+
+    <!-- Player 1 (Top Left) -->
+    <ImageView
+        android:id="@+id/monsterImage1"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/giant_robot" />
+
+    <include
+        android:id="@+id/playerHud1"
+        layout="@layout/player_hud"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toEndOf="@id/monsterImage1"
+        app:layout_constraintTop_toTopOf="@id/monsterImage1" />
+
+    <!-- Player 2 (Top Right) -->
+    <ImageView
+        android:id="@+id/monsterImage2"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/dino" />
+
+    <include
+        android:id="@+id/playerHud2"
+        layout="@layout/player_hud"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toStartOf="@id/monsterImage2"
+        app:layout_constraintTop_toTopOf="@id/monsterImage2" />
+
+
+    <!-- Player 3 (Bottom Left) -->
+    <ImageView
+        android:id="@+id/monsterImage3"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:src="@drawable/gorilla" />
+
+    <include
+        android:id="@+id/playerHud3"
+        layout="@layout/player_hud"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@id/monsterImage3"
+        app:layout_constraintStart_toEndOf="@id/monsterImage3" />
+
+    <!-- Player 4 (Bottom Right) -->
+
+    <ImageView
+        android:id="@+id/monsterImage4"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="16dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:src="@drawable/lovecraft_monster" />
+
+    <include
+        android:id="@+id/playerHud4"
+        layout="@layout/player_hud"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toBottomOf="@id/monsterImage4"
+        app:layout_constraintEnd_toStartOf="@id/monsterImage4" />
+
+
+    <!-- ACTION BUTTONS -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/rollDiceButton"
+        android:layout_width="165dp"
+        android:layout_height="36dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/button_main_menu"
+        android:text="@string/roll_dice"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
