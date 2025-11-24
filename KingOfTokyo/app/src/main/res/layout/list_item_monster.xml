@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:padding="8dp"
+    android:background="@drawable/monster_selector"
+    android:foreground="?attr/selectableItemBackgroundBorderless">
+
+    <ImageView
+        android:id="@+id/monsterImage"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:adjustViewBounds="true"
+        tools:src="@drawable/placeholder_monster"/>
+
+    <TextView
+        android:id="@+id/monsterName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Aegis-01"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/monsterStats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="❤️ 10   ⭐ 0"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:layout_marginTop="2dp"/>
+
+</LinearLayout>

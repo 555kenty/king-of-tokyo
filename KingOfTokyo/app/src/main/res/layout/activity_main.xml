@@ -1,19 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/title_screen_background"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Conteneur des boutons -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingBottom="60dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Bouton JOUER -->
+        <Button
+            android:id="@+id/playButton"
+            android:layout_width="260dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:background="#0E1C22"
+            android:text="@string/play"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Bouton OPTIONS -->
+        <Button
+            android:id="@+id/optionsButton"
+            android:layout_width="220dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="20dp"
+            android:background="#0E1C22"
+            android:text="@string/options"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Bouton QUITTER -->
+        <Button
+            android:id="@+id/quitButton"
+            android:layout_width="220dp"
+            android:layout_height="60dp"
+            android:background="#0E1C22"
+            android:text="@string/quit"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="dark_background">#2c3e50</color>
+    <color name="steel_blue">#4682B4</color>
+    <color name="rust_gold">#B7410E</color>
+    <color name="black_red">#8B0000</color>
+    <color name="silver_toxic_green">#32CD32</color>
+    <color name="white">#FFFFFF</color>
 </resources>

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">KingOfTokyo</string>
+    <string name="play">Jouer</string>
+    <string name="options">Options</string>
+    <string name="quit">Quitter</string>
+    <string name="character_selection_title">CHOISIS TON PERSONNAGE</string>
 </resources>
