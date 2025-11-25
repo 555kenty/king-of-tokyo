@@ -3,8 +3,10 @@ package com.example.kingoftokyo
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -169,8 +171,11 @@ class GameActivity : AppCompatActivity() {
             return
         }
         cards.forEach { card ->
-            val chip = inflater.inflate(R.layout.active_effect_chip, container, false) as TextView
-            chip.text = "${card.name} • Actif"
+            val chip = inflater.inflate(R.layout.active_effect_chip, container, false)
+            val nameView = chip.findViewById<TextView>(R.id.effectName)
+            val badgeView = chip.findViewById<TextView>(R.id.effectBadge)
+            nameView.text = card.name
+            badgeView.text = "Actif"
             chip.setOnClickListener { showEffectDetail(card) }
             container.addView(chip)
         }
@@ -238,12 +243,11 @@ class GameActivity : AppCompatActivity() {
         panel.findViewById<TextView>(R.id.effectTitle).text = title
         panel.findViewById<TextView>(R.id.effectSubtitle).text = gameManager.currentPlayer.monster.name
         panel.findViewById<TextView>(R.id.effectDescription).text = desc
-        val params = ViewGroup.MarginLayoutParams(
+        val params = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         ).apply {
-            marginStart = 32
-            topMargin = 32
+            gravity = Gravity.CENTER
         }
         overlayView.addView(panel, params)
         overlayView.visibility = View.VISIBLE
