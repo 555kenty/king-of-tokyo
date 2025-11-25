@@ -10,6 +10,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import kotlin.math.sign
 
 class GameActivity : AppCompatActivity() {
 
@@ -47,7 +49,9 @@ class GameActivity : AppCompatActivity() {
             onShopPhase = { _, _ ->
                 runOnUiThread { shopPopupManager.showShop(gameManager) }
             },
-            onDamageVisual = { targets -> runOnUiThread { flashTargets(targets) } }
+            onDamageVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = false) } },
+            onHealVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = true) } },
+            onEnergyVisual = { pairs -> runOnUiThread { showEnergyDeltas(pairs) } }
         )
 
         inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
@@ -149,7 +153,7 @@ class GameActivity : AppCompatActivity() {
         val container = activeEffectsContainer
         container.removeAllViews()
         val inflater = layoutInflater
-        val cards = gameManager.currentPlayer.cards
+        val cards = gameManager.currentPlayer.activeCards
         if (cards.isEmpty()) {
             val empty = TextView(this).apply {
                 text = "Aucun effet actif"
@@ -161,24 +165,46 @@ class GameActivity : AppCompatActivity() {
         }
         cards.forEach { card ->
             val chip = inflater.inflate(R.layout.active_effect_chip, container, false) as TextView
-            chip.text = card.name
+            chip.text = "${card.name} • Actif"
             chip.setOnClickListener { showEffectDetail(card) }
             container.addView(chip)
         }
     }
 
-    private fun flashTargets(targets: List<Player>) {
+    private fun flashTargets(targets: List<Player>, isHeal: Boolean = false) {
         targets.forEach { player ->
             val idx = gameManager.players.indexOf(player)
             if (idx in playerHudViews.indices) {
                 val view = playerHudViews[idx]
                 view.animate().cancel()
                 val originalAlpha = view.alpha
+                val color = if (isHeal) 0x66A5D6A7 else 0x66F44336
+                view.setBackgroundColor(color.toInt())
                 view.animate()
                     .alpha(0.5f)
-                    .setDuration(80)
+                    .setDuration(120)
                     .withEndAction {
-                        view.animate().alpha(originalAlpha).setDuration(180).start()
+                        view.animate().alpha(originalAlpha).setDuration(120).withEndAction {
+                            view.setBackgroundColor(0x00000000)
+                        }.start()
+                    }
+                    .start()
+            }
+            if (idx in playerMonsterImageViews.indices) {
+                val monsterView = playerMonsterImageViews[idx]
+                monsterView.animate().cancel()
+                val originalAlpha = monsterView.alpha
+                monsterView.colorFilter = android.graphics.PorterDuffColorFilter(
+                    if (isHeal) 0x99A5D6A7.toInt() else 0x99F44336.toInt(),
+                    android.graphics.PorterDuff.Mode.SRC_ATOP
+                )
+                monsterView.animate()
+                    .alpha(0.6f)
+                    .setDuration(120)
+                    .withEndAction {
+                        monsterView.animate().alpha(originalAlpha).setDuration(120).withEndAction {
+                            monsterView.colorFilter = null
+                        }.start()
                     }
                     .start()
             }
@@ -189,11 +215,10 @@ class GameActivity : AppCompatActivity() {
         val overlayView = effectOverlay as ViewGroup
         overlayView.removeAllViews()
         overlayView.setBackgroundColor(0x99000000.toInt())
-        val panel = layoutInflater.inflate(R.layout.active_effect_chip, overlayView, false) as TextView
-        panel.text = "${card.name}\n${card.description}"
-        panel.textSize = 14f
-        panel.setPadding(16, 16, 16, 16)
-        panel.background = ContextCompat.getDrawable(this, R.drawable.button_main_menu)
+        val panel = layoutInflater.inflate(R.layout.effect_overlay_panel, overlayView, false)
+        panel.findViewById<TextView>(R.id.effectTitle).text = card.name
+        panel.findViewById<TextView>(R.id.effectSubtitle).text = "Actif pour ${gameManager.currentPlayer.monster.name}"
+        panel.findViewById<TextView>(R.id.effectDescription).text = card.description
         val params = ViewGroup.MarginLayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -210,5 +235,40 @@ class GameActivity : AppCompatActivity() {
         val overlayView = effectOverlay as ViewGroup
         overlayView.removeAllViews()
         overlayView.visibility = View.GONE
+    }
+
+    private fun showEnergyDeltas(pairs: List<Pair<Player, Int>>) {
+        pairs.forEach { (player, delta) ->
+            val idx = gameManager.players.indexOf(player)
+            if (idx in playerHudViews.indices) {
+                val view = playerHudViews[idx]
+                val label = TextView(this).apply {
+                    text = if (delta > 0) "+$delta ⚡" else "$delta ⚡"
+                    setTextColor(if (delta > 0) ContextCompat.getColor(this@GameActivity, android.R.color.holo_green_light) else ContextCompat.getColor(this@GameActivity, android.R.color.holo_red_light))
+                    textSize = 14f
+                }
+                val overlayView = effectOverlay as ViewGroup
+                overlayView.removeAllViews()
+                overlayView.setBackgroundColor(0x00000000)
+                val params = ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    marginStart = (view.x + view.width / 2f).toInt()
+                    topMargin = (view.y - 10f).toInt()
+                }
+                overlayView.addView(label, params)
+                overlayView.visibility = View.VISIBLE
+                label.animate()
+                    .translationY(-40f)
+                    .alpha(0f)
+                    .setDuration(1200)
+                    .withEndAction {
+                        overlayView.removeAllViews()
+                        overlayView.visibility = View.GONE
+                    }
+                    .start()
+            }
+        }
     }
 }

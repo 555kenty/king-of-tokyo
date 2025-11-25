@@ -17,12 +17,15 @@ class GameManager(
     private val onGameOver: (Boolean) -> Unit,
     private val onTokyoChoice: (Player, Player) -> Unit,
     private val onShopPhase: (List<Card>, Player) -> Unit,
-    private val onDamageVisual: (List<Player>) -> Unit = {}
+    private val onDamageVisual: (List<Player>) -> Unit = {},
+    private val onHealVisual: (List<Player>) -> Unit = {},
+    private val onEnergyVisual: (List<Pair<Player, Int>>) -> Unit = {}
 ) {
 
     lateinit var players: List<Player>
     private var currentPlayerIndex = 0
     var gameState = GameState.RUNNING
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private val maxHealth: Int
         get() = currentPlayer.monster.healthPoints
@@ -57,10 +60,10 @@ class GameManager(
         if (currentPlayer.isInTokyo) {
             currentPlayer.victoryPoints += 2
         }
-        if (currentPlayer.hasCard(CardNames.CARAPACE_ADAPTATIVE) && currentPlayer.isInTokyo) {
+        if (currentPlayer.hasActiveCard(CardNames.CARAPACE_ADAPTATIVE) && currentPlayer.isInTokyo) {
             currentPlayer.victoryPoints += 1
         }
-        if (currentPlayer.hasCard(CardNames.HURLEMENT_TERRIFIANT)) {
+        if (currentPlayer.hasActiveCard(CardNames.HURLEMENT_TERRIFIANT)) {
             players.filter { it != currentPlayer }.forEach { target ->
                 target.victoryPoints = (target.victoryPoints - 1).coerceAtLeast(0)
             }
@@ -95,10 +98,10 @@ class GameManager(
         val attackCount = faceCounts[DieFace.SMASH] ?: 0
         if (attackCount > 0) {
             if (handleAttack(currentPlayer, attackCount)) {
-                 startShoppingPhase()
+                 scheduleShoppingPhase()
             }
         } else {
-            startShoppingPhase()
+            scheduleShoppingPhase()
         }
     }
 
@@ -106,7 +109,7 @@ class GameManager(
         if (gameState == GameState.GAME_OVER) return
 
         // Effets de fin de tour (régénération passive)
-        if (currentPlayer.hasCard(CardNames.NANO_REGENERATION)) {
+        if (currentPlayer.hasActiveCard(CardNames.NANO_REGENERATION)) {
             currentPlayer.health = (currentPlayer.health + 1).coerceAtMost(currentPlayer.monster.healthPoints)
         }
 
@@ -141,9 +144,13 @@ class GameManager(
 
     private fun resolveEnergy(player: Player, faceCounts: Map<DieFace, Int>) {
         val energyCount = faceCounts[DieFace.ENERGY] ?: 0
-        player.energy += energyCount
-        if (energyCount >= 3 && player.hasCard(CardNames.BATTERIE_SURCHARGEE)) {
-            player.energy += 3
+        var delta = energyCount
+        if (energyCount >= 3 && player.hasActiveCard(CardNames.BATTERIE_SURCHARGEE)) {
+            delta += 3
+        }
+        if (delta != 0) {
+            player.energy += delta
+            onEnergyVisual(listOf(player to delta))
         }
     }
 
@@ -151,6 +158,7 @@ class GameManager(
         if (!player.isInTokyo) {
             val healCount = faceCounts[DieFace.HEART] ?: 0
             player.health = (player.health + healCount).coerceAtMost(player.monster.healthPoints)
+            if (healCount > 0) onHealVisual(listOf(player))
         }
     }
 
@@ -177,12 +185,12 @@ class GameManager(
                         }
                     }
                 }
-                if (attacker.hasCard(CardNames.COEUR_ATOMIQUE)) {
+                if (attacker.hasActiveCard(CardNames.COEUR_ATOMIQUE)) {
                     attacker.victoryPoints += 2
                 }
             }
         }
-        if (attacker.hasCard(CardNames.SANG_CORROMPU)) {
+        if (attacker.hasActiveCard(CardNames.SANG_CORROMPU)) {
             attacker.health = (attacker.health - 1).coerceAtLeast(0)
             handleResurrection(attacker)
         }
@@ -194,15 +202,19 @@ class GameManager(
     fun applyDamage(target: Player, damage: Int, attacker: Player? = null) {
         if (target.health <= 0) return
         target.health -= damage
-        if (damage >= 3 && target.hasCard(CardNames.MUTATION_CRISTALLINE)) {
+        if (damage >= 3 && target.hasActiveCard(CardNames.MUTATION_CRISTALLINE)) {
             target.energy += 3
+            onEnergyVisual(listOf(target to 3))
         }
         attacker?.let {
-            if (it.hasCard(CardNames.PARASITE_KAIJU)) {
+            if (it.hasActiveCard(CardNames.PARASITE_KAIJU)) {
                 val stolen = target.energy.coerceAtMost(1)
                 target.energy -= stolen
                 it.energy += stolen
                 it.health = (it.health - 1).coerceAtLeast(0)
+                if (stolen != 0) {
+                    onEnergyVisual(listOf(target to -stolen, it to stolen))
+                }
             }
             handleResurrection(it)
         }
@@ -211,8 +223,14 @@ class GameManager(
         onUpdate()
     }
 
+    fun notifyEnergyChange(changes: List<Pair<Player, Int>>) {
+        if (changes.isNotEmpty()) {
+            onEnergyVisual(changes)
+        }
+    }
+
     fun playerDecidedTokyo(wantsToStay: Boolean, defender: Player, attacker: Player) {
-        val forcedStay = defender.hasCard(CardNames.RAGE_PRIMALE)
+        val forcedStay = defender.hasActiveCard(CardNames.RAGE_PRIMALE)
         if (!wantsToStay && !forcedStay) {
             leaveTokyo(defender, attacker)
         }
@@ -237,7 +255,7 @@ class GameManager(
 
     private fun leaveTokyo(defender: Player, attacker: Player) {
         defender.isInTokyo = false
-        if (defender.hasCard(CardNames.PROPULSION)) {
+        if (defender.hasActiveCard(CardNames.PROPULSION)) {
             defender.victoryPoints += 4
         }
         enterTokyo(attacker)
@@ -270,6 +288,10 @@ class GameManager(
         }
     }
     
+    private fun scheduleShoppingPhase() {
+        mainHandler.postDelayed({ startShoppingPhase() }, SHOP_DELAY_MS)
+    }
+    
     private fun executeBotShopping() {
         val affordableCard = shop.filter { currentPlayer.energy >= it.cost }.maxByOrNull { it.cost }
         if (affordableCard != null) {
@@ -282,11 +304,12 @@ class GameManager(
     fun buyCard(card: Card) {
         if (currentPlayer.energy >= card.cost) {
             currentPlayer.energy -= card.cost
+            onEnergyVisual(listOf(currentPlayer to -card.cost))
             val isAction = card.type == CardType.ACTION
             if (isAction) {
                 card.effect(currentPlayer, this)
             } else {
-                currentPlayer.cards.add(card)
+                currentPlayer.cards.add(card) // En main, pas encore active
             }
 
             val cardIndex = shop.indexOf(card)
@@ -314,7 +337,10 @@ class GameManager(
 
         val removed = if (removeFromInventory || card.type == CardType.ACTION) {
             currentPlayer.cards.remove(card)
+            true
         } else {
+            currentPlayer.cards.remove(card)
+            currentPlayer.activeCards.add(card)
             false
         }
         onUpdate()
@@ -344,23 +370,24 @@ class GameManager(
 
     companion object {
         private const val DICE_COUNT = 3
+        private const val SHOP_DELAY_MS = 2000L
     }
 
     // Helpers cartes
-    private fun Player.hasCard(cardName: String): Boolean = cards.any { it.name == cardName }
+    private fun Player.hasActiveCard(cardName: String): Boolean = activeCards.any { it.name == cardName }
 
     private fun attackBonus(attacker: Player): Int {
         var bonus = 0
-        if (attacker.hasCard(CardNames.GRIFFES_CHARGEES) && !attacker.isInTokyo) bonus += 1
-        if (attacker.hasCard(CardNames.RAGE_PRIMALE)) bonus += 1
-        if (attacker.hasCard(CardNames.MODE_APOCALYPSE)) bonus += 3
-        if (attacker.hasCard(CardNames.SANG_CORROMPU)) bonus += 2
+        if (attacker.hasActiveCard(CardNames.GRIFFES_CHARGEES) && !attacker.isInTokyo) bonus += 1
+        if (attacker.hasActiveCard(CardNames.RAGE_PRIMALE)) bonus += 1
+        if (attacker.hasActiveCard(CardNames.MODE_APOCALYPSE)) bonus += 3
+        if (attacker.hasActiveCard(CardNames.SANG_CORROMPU)) bonus += 2
         return bonus
     }
 
     private fun handleResurrection(player: Player) {
-        if (player.health <= 0 && player.hasCard(CardNames.RESURRECTION)) {
-            player.cards.removeIf { it.name == CardNames.RESURRECTION }
+        if (player.health <= 0 && player.hasActiveCard(CardNames.RESURRECTION)) {
+            player.activeCards.removeIf { it.name == CardNames.RESURRECTION }
             player.health = 6
         }
     }

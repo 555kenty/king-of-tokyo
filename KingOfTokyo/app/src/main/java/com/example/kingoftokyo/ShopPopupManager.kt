@@ -10,6 +10,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import android.os.Handler
+import android.os.Looper
 
 class ShopPopupManager(
     private val context: Context,
@@ -21,6 +23,7 @@ class ShopPopupManager(
     // CORRECTION FINALE : Cette liste DOIT toujours avoir 3 éléments, comme l'interface.
     private val selectedInUI = mutableListOf(false, false, false)
     private var gameManager: GameManager? = null
+    private val handler = Handler(Looper.getMainLooper())
 
     fun showShop(gameManager: GameManager) {
         this.gameManager = gameManager
@@ -103,15 +106,21 @@ class ShopPopupManager(
             return
         }
         
+        var hasAction = false
         cardsToBuy.forEach { (uiIndex, card) ->
             if (card.type == CardType.ACTION) {
                 animateActionActivation(uiIndex, card)
+                hasAction = true
             }
             gm.buyCard(card)
         }
 
-        // Après l'achat, on met à jour l'affichage de la boutique.
-        updateShopUI()
+        if (hasAction) {
+            // Laisser l'animation se jouer puis rafraîchir le shop sans le fermer
+            handler.postDelayed({ updateShopUI() }, 1200)
+        } else {
+            updateShopUI()
+        }
     }
 
     private fun refreshShop() {
@@ -167,12 +176,13 @@ class ShopPopupManager(
     }
 
     private fun showActionBanner(card: Card) {
+        val playerName = gameManager?.currentPlayer?.monster?.name ?: "Un joueur"
         val banner = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(24, 16, 24, 16)
             background = ContextCompat.getDrawable(context, R.drawable.button_main_menu)
             val textView = TextView(context).apply {
-                text = "Effet de ${card.name} activé"
+                text = "$playerName utilise ${card.name}"
                 setTextColor(ContextCompat.getColor(context, android.R.color.white))
                 textSize = 16f
             }

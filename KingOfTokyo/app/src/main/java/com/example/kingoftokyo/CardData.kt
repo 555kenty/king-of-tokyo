@@ -22,8 +22,9 @@ object CardData {
         Card("Onde de Choc", 4, CardType.ACTION, CardCategory.ACTION, "Tous les autres monstres perdent 1 ❤️.", R.drawable.carte_onde_de_choc) { player, game ->
             game.players.filter { it != player }.forEach { game.applyDamage(it, 1, player) }
         },
-        Card("Absorption d’Énergie", 3, CardType.ACTION, CardCategory.ACTION, "Gagnez 3 énergie immédiatement.", R.drawable.carte_absorption_energie) { player, _ ->
+        Card("Absorption d’Énergie", 3, CardType.ACTION, CardCategory.ACTION, "Gagnez 3 énergie immédiatement.", R.drawable.carte_absorption_energie) { player, game ->
             player.energy += 3
+            game.notifyEnergyChange(listOf(player to 3))
         },
         Card("Bond Titanesque", 4, CardType.ACTION, CardCategory.ACTION, "Entrez immédiatement dans Tokyo. Gagnez 1 ⭐.", R.drawable.carte_bond_titanesque) { player, game ->
             game.enterTokyo(player)

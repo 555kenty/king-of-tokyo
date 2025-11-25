@@ -87,15 +87,17 @@ class InventoryPopupManager(
 
     private fun useSelectedCard() {
         selectedCard?.let { cardToUse ->
-            // On retire systématiquement la carte de l'inventaire après usage
-            val wasRemoved = gameManager.useCard(cardToUse, removeFromInventory = true)
+            val shouldRemove = cardToUse.type == CardType.ACTION
+            gameManager.useCard(cardToUse, removeFromInventory = shouldRemove)
             showInventoryBanner(cardToUse)
             showEffectOverlay(cardToUse)
             
             refreshInventory()
             selectedCard = null
             updateButtons()
-            hide() // On ferme l'inventaire après usage
+            if (shouldRemove) {
+                hide() // On ferme l'inventaire après usage d'une action
+            }
         }
     }
 
@@ -116,7 +118,7 @@ class InventoryPopupManager(
             setPadding(24, 16, 24, 16)
             background = ContextCompat.getDrawable(context, R.drawable.button_main_menu)
             val textView = TextView(context).apply {
-                text = "Effet de ${card.name} activé"
+                text = "${gameManager.currentPlayer.monster.name} utilise ${card.name}"
                 setTextColor(ContextCompat.getColor(context, android.R.color.white))
                 textSize = 16f
             }
@@ -187,7 +189,7 @@ class InventoryPopupManager(
             .withEndAction {
                 overlay.animate()
                     .alpha(0f)
-                    .setStartDelay(3000) // reste ~3s
+                    .setStartDelay(2500) // reste ~2-3s
                     .setDuration(300)
                     .withEndAction { root.removeView(overlay) }
                     .start()
