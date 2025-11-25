@@ -40,4 +40,17 @@
             android:textSize="20sp" />
     </LinearLayout>
 
+    <!-- 🔥 Bouton RÈGLES ajouté uniquement -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnRules"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="RÈGLES"
+        android:background="@drawable/button_main_menu"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
