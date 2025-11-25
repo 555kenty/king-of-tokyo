@@ -20,7 +20,11 @@ class GameManager(
     private val onDamageVisual: (List<Player>) -> Unit = {},
     private val onHealVisual: (List<Player>) -> Unit = {},
     private val onEnergyVisual: (List<Pair<Player, Int>>) -> Unit = {},
-    private val onCardUsed: (Player, Card) -> Unit = { _, _ -> }
+    private val onCardUsed: (Player, Card) -> Unit = { _, _ -> },
+    private val onTargetRequest: (List<Player>, (Player?) -> Unit) -> Unit = { list, cb -> cb(list.firstOrNull()) },
+    private val onTeleportRequest: (Player, () -> Unit, () -> Unit) -> Unit = { player, enter, exit ->
+        if (player.isInTokyo) exit() else enter()
+    }
 ) {
 
     lateinit var players: List<Player>
@@ -230,6 +234,25 @@ class GameManager(
         }
     }
 
+    fun selectTarget(attacker: Player, onSelected: (Player?) -> Unit) {
+        val candidates = players.filter { it != attacker && it.health > 0 }
+        if (candidates.isEmpty()) {
+            onSelected(null)
+        } else if (attacker.isHuman) {
+            onTargetRequest(candidates, onSelected)
+        } else {
+            onSelected(candidates.first())
+        }
+    }
+
+    fun requestTeleport(player: Player, onEnterTokyo: () -> Unit, onExitTokyo: () -> Unit) {
+        if (player.isHuman) {
+            onTeleportRequest(player, onEnterTokyo, onExitTokyo)
+        } else {
+            if (player.isInTokyo) onExitTokyo() else onEnterTokyo()
+        }
+    }
+
     fun playerDecidedTokyo(wantsToStay: Boolean, defender: Player, attacker: Player) {
         val forcedStay = defender.hasActiveCard(CardNames.RAGE_PRIMALE)
         if (!wantsToStay && !forcedStay) {
@@ -347,6 +370,7 @@ class GameManager(
             currentPlayer.activeCards.add(card)
             false
         }
+        onCardUsed(currentPlayer, card)
         onUpdate()
         return removed
     }

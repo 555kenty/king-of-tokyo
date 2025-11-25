@@ -1,7 +1,6 @@
 package com.example.kingoftokyo
 
 import android.content.Context
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -151,77 +150,12 @@ class InventoryPopupManager(
     }
 
     private fun showEffectOverlay(card: Card) {
-        val effect = resolveEffectVisual(card)
-        val overlay = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 32, 32, 32)
-            setBackgroundColor(effect.color)
-            isClickable = true // bloque les interactions pendant l'affichage
-            val title = TextView(context).apply {
-                text = "Effet activé"
-                setTextColor(Color.WHITE)
-                textSize = 18f
-            }
-            val desc = TextView(context).apply {
-                text = effect.message
-                setTextColor(Color.WHITE)
-                textSize = 16f
-            }
-            val duration = TextView(context).apply {
-                text = effect.durationText
-                setTextColor(Color.WHITE)
-                textSize = 14f
-            }
-            addView(title)
-            addView(desc)
-            addView(duration)
-            alpha = 0f
-        }
-
-        val params = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
+        val host = context as? GameActivity
+        host?.showBlockingEffect(
+            title = "Effet activé",
+            desc = "${card.name} – ${card.description}",
+            duration = 1200L
         )
-        root.addView(overlay, params)
-        overlay.animate()
-            .alpha(0.9f)
-            .setDuration(200)
-            .withEndAction {
-                overlay.animate()
-                    .alpha(0f)
-                    .setStartDelay(2500) // reste ~2-3s
-                    .setDuration(300)
-                    .withEndAction { root.removeView(overlay) }
-                    .start()
-            }
-            .start()
     }
 
-    private fun resolveEffectVisual(card: Card): EffectVisual {
-        return when (card.name) {
-            "Absorption d’Énergie" -> EffectVisual("+3⚡", "Instantané", 0xCC43A047.toInt())
-            "Mutation Express" -> EffectVisual("+1⭐ et +1⚡", "Instantané", 0xCC1E88E5.toInt())
-            "Bond Titanesque" -> EffectVisual("Entre à Tokyo, +1⭐", "Instantané", 0xCC1E88E5.toInt())
-            "Téléportation" -> EffectVisual("Change de zone Tokyo/dehors", "Instantané", 0xCC7B1FA2.toInt())
-            "Frappe Orbitale" -> EffectVisual("Inflige 3❤️ à un adversaire", "Instantané", 0xCCF4511E.toInt())
-            "Onde de Choc" -> EffectVisual("Tous les autres perdent 1❤️", "Instantané", 0xCCF4511E.toInt())
-            "Propulsion" -> EffectVisual("+4⭐ en quittant Tokyo", "Permanent", 0xCC1E88E5.toInt())
-            "Griffes Chargées" -> EffectVisual("+1👊 hors Tokyo", "Permanent", 0xCCF4511E.toInt())
-            "Cœur Atomique" -> EffectVisual("+2⭐ quand tu attaques Tokyo", "Permanent", 0xCC1E88E5.toInt())
-            "Nano-Régénération" -> EffectVisual("+1❤️ fin de tour", "Permanent", 0xCC43A047.toInt())
-            "Carapace Adaptative" -> EffectVisual("+1⭐ début de tour en Tokyo", "Permanent", 0xCC1E88E5.toInt())
-            "Hurlement Terrifiant" -> EffectVisual("Les autres perdent 1⭐ début de tour", "Permanent", 0xCCF4511E.toInt())
-            "Vision Nocturne" -> EffectVisual("Attaques inévitables", "Permanent", 0xCC3949AB.toInt())
-            "Batterie Surchargée" -> EffectVisual("+3⚡ si tu gardes 3⚡", "Permanent", 0xCC43A047.toInt())
-            "Rage Primale" -> EffectVisual("+1👊 et reste à Tokyo", "Permanent", 0xCCF4511E.toInt())
-            "Sang Corrompu" -> EffectVisual("+2👊 mais -1❤️ après attaque", "Permanent", 0xCCF4511E.toInt())
-            "Mutation Cristalline" -> EffectVisual("+3⚡ si tu prends 3+ dégâts", "Permanent", 0xCC43A047.toInt())
-            "Parasite Kaiju" -> EffectVisual("Vole 1⚡ et -1❤️ pour toi", "Permanent", 0xCCF4511E.toInt())
-            "Mode Apocalypse" -> EffectVisual("+3👊", "Permanent", 0xCCF4511E.toInt())
-            "Résurrection" -> EffectVisual("Revient à 6❤️ en mourant", "Permanent", 0xCC43A047.toInt())
-            else -> EffectVisual("Effet appliqué", "Instantané", 0xCC263238.toInt())
-        }
-    }
-
-    private data class EffectVisual(val message: String, val durationText: String, val color: Int)
 }

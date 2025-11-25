@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import android.widget.Toast
@@ -53,7 +54,9 @@ class GameActivity : AppCompatActivity() {
             onDamageVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = false) } },
             onHealVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = true) } },
             onEnergyVisual = { pairs -> runOnUiThread { showEnergyDeltas(pairs) } },
-            onCardUsed = { player, card -> runOnUiThread { showBotCardBanner(player, card) } }
+            onCardUsed = { player, card -> runOnUiThread { showBotCardBanner(player, card) } },
+            onTargetRequest = { candidates, callback -> runOnUiThread { promptTargetSelection(candidates, callback) } },
+            onTeleportRequest = { player, enter, exit -> runOnUiThread { promptTeleportChoice(player, enter, exit) } }
         )
 
         inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
@@ -214,13 +217,27 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showEffectDetail(card: Card) {
+        AlertDialog.Builder(this)
+            .setTitle(card.name)
+            .setMessage(card.description)
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    private fun hideEffectDetail() {
         val overlayView = effectOverlay as ViewGroup
         overlayView.removeAllViews()
-        overlayView.setBackgroundColor(0x99000000.toInt())
+        overlayView.visibility = View.GONE
+    }
+
+    fun showBlockingEffect(title: String, desc: String, duration: Long = 1200L) {
+        val overlayView = effectOverlay as ViewGroup
+        overlayView.removeAllViews()
+        overlayView.setBackgroundColor(0xAA000000.toInt())
         val panel = layoutInflater.inflate(R.layout.effect_overlay_panel, overlayView, false)
-        panel.findViewById<TextView>(R.id.effectTitle).text = card.name
-        panel.findViewById<TextView>(R.id.effectSubtitle).text = "Actif pour ${gameManager.currentPlayer.monster.name}"
-        panel.findViewById<TextView>(R.id.effectDescription).text = card.description
+        panel.findViewById<TextView>(R.id.effectTitle).text = title
+        panel.findViewById<TextView>(R.id.effectSubtitle).text = gameManager.currentPlayer.monster.name
+        panel.findViewById<TextView>(R.id.effectDescription).text = desc
         val params = ViewGroup.MarginLayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
@@ -231,12 +248,18 @@ class GameActivity : AppCompatActivity() {
         overlayView.addView(panel, params)
         overlayView.visibility = View.VISIBLE
         overlayView.setOnClickListener { hideEffectDetail() }
-    }
-
-    private fun hideEffectDetail() {
-        val overlayView = effectOverlay as ViewGroup
-        overlayView.removeAllViews()
-        overlayView.visibility = View.GONE
+        overlayView.animate()
+            .alpha(1f)
+            .setDuration(150)
+            .withEndAction {
+                overlayView.animate()
+                    .alpha(0f)
+                    .setStartDelay(duration)
+                    .setDuration(200)
+                    .withEndAction { hideEffectDetail() }
+                    .start()
+            }
+            .start()
     }
 
     private fun showEnergyDeltas(pairs: List<Pair<Player, Int>>) {
@@ -272,6 +295,38 @@ class GameActivity : AppCompatActivity() {
                     .start()
             }
         }
+    }
+
+    private fun promptTargetSelection(candidates: List<Player>, onSelected: (Player?) -> Unit) {
+        val names = candidates.map { it.monster.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Choisir une cible")
+            .setItems(names) { dialog, which ->
+                dialog.dismiss()
+                onSelected(candidates[which])
+            }
+            .setOnCancelListener { onSelected(null) }
+            .show()
+    }
+
+    private fun promptTeleportChoice(player: Player, onEnterTokyo: () -> Unit, onExitTokyo: () -> Unit) {
+        val options = if (player.isInTokyo) {
+            arrayOf("Rester dans Tokyo", "Quitter Tokyo")
+        } else {
+            arrayOf("Entrer dans Tokyo", "Rester dehors")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Téléportation")
+            .setItems(options) { dialog, which ->
+                dialog.dismiss()
+                if (player.isInTokyo) {
+                    if (which == 1) onExitTokyo() // Quitter
+                } else {
+                    if (which == 0) onEnterTokyo() // Entrer
+                }
+            }
+            .setOnCancelListener { onExitTokyo() }
+            .show()
     }
 
     private fun showBotCardBanner(player: Player, card: Card) {

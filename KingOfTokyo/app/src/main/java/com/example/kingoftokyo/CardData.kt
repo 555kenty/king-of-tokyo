@@ -14,9 +14,8 @@ object CardData {
 
         // --- ACTIONS (ACTIVE) ---
         Card("Frappe Orbitale", 5, CardType.ACTION, CardCategory.ACTION, "Infligez 3 ❤️ à n’importe quel monstre.", R.drawable.carte_frappe_orbitale) { player, game ->
-            val target = game.players.firstOrNull { it != player && it.health > 0 }
-            if (target != null) {
-                game.applyDamage(target, 3, player)
+            game.selectTarget(player) { target ->
+                target?.let { game.applyDamage(it, 3, player) }
             }
         },
         Card("Onde de Choc", 4, CardType.ACTION, CardCategory.ACTION, "Tous les autres monstres perdent 1 ❤️.", R.drawable.carte_onde_de_choc) { player, game ->
@@ -35,11 +34,11 @@ object CardData {
             player.energy += 1
         },
         Card("Téléportation", 6, CardType.ACTION, CardCategory.ACTION, "Placez votre monstre où vous voulez (dans Tokyo ou dehors).", R.drawable.carte_teleportation) { player, game ->
-            if (player.isInTokyo) {
-                player.isInTokyo = false
-            } else {
-                game.enterTokyo(player)
-            }
+            game.requestTeleport(
+                player,
+                onEnterTokyo = { game.enterTokyo(player) },
+                onExitTokyo = { player.isInTokyo = false }
+            )
         },
 
         // --- MUTATIONS (PASSIVE) ---
