@@ -6,7 +6,7 @@ data class Player(
     var isInTokyo: Boolean = false,
     var health: Int = monster.healthPoints,
     var victoryPoints: Int = monster.victoryPoints,
-    var energy: Int = 30,
+    var energy: Int = 10,
     val cards: MutableList<Card> = mutableListOf(), // L'inventaire (non activées)
     val activeCards: MutableList<Card> = mutableListOf() // Effets passifs activés
 )

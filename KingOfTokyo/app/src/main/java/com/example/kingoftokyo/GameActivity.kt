@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import android.widget.Toast
 import kotlin.math.sign
 
 class GameActivity : AppCompatActivity() {
@@ -51,7 +52,8 @@ class GameActivity : AppCompatActivity() {
             },
             onDamageVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = false) } },
             onHealVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = true) } },
-            onEnergyVisual = { pairs -> runOnUiThread { showEnergyDeltas(pairs) } }
+            onEnergyVisual = { pairs -> runOnUiThread { showEnergyDeltas(pairs) } },
+            onCardUsed = { player, card -> runOnUiThread { showBotCardBanner(player, card) } }
         )
 
         inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
@@ -270,5 +272,42 @@ class GameActivity : AppCompatActivity() {
                     .start()
             }
         }
+    }
+
+    private fun showBotCardBanner(player: Player, card: Card) {
+        val rootContainer = findViewById<ViewGroup>(android.R.id.content)
+        val banner = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(this@GameActivity, R.drawable.button_main_menu)
+            val text = TextView(this@GameActivity).apply {
+                this.text = "${player.monster.name} utilise ${card.name}"
+                setTextColor(ContextCompat.getColor(this@GameActivity, android.R.color.white))
+                textSize = 16f
+            }
+            addView(text)
+            alpha = 0f
+        }
+        val params = ViewGroup.MarginLayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = 32
+            marginStart = 24
+            marginEnd = 24
+        }
+        rootContainer.addView(banner, params)
+        banner.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .withEndAction {
+                banner.animate()
+                    .alpha(0f)
+                    .setStartDelay(2000)
+                    .setDuration(300)
+                    .withEndAction { rootContainer.removeView(banner) }
+                    .start()
+            }
+            .start()
     }
 }

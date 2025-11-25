@@ -19,7 +19,8 @@ class GameManager(
     private val onShopPhase: (List<Card>, Player) -> Unit,
     private val onDamageVisual: (List<Player>) -> Unit = {},
     private val onHealVisual: (List<Player>) -> Unit = {},
-    private val onEnergyVisual: (List<Pair<Player, Int>>) -> Unit = {}
+    private val onEnergyVisual: (List<Pair<Player, Int>>) -> Unit = {},
+    private val onCardUsed: (Player, Card) -> Unit = { _, _ -> }
 ) {
 
     lateinit var players: List<Player>
@@ -308,6 +309,9 @@ class GameManager(
             val isAction = card.type == CardType.ACTION
             if (isAction) {
                 card.effect(currentPlayer, this)
+                if (!currentPlayer.isHuman) {
+                    onCardUsed(currentPlayer, card)
+                }
             } else {
                 currentPlayer.cards.add(card) // En main, pas encore active
             }
