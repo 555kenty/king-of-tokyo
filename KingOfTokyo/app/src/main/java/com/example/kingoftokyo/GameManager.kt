@@ -118,18 +118,17 @@ class GameManager(
                 playerInTokyo.health -= damage
                 onUpdate()
                 if (playerInTokyo.health <= 0) {
-                    // CORRECTION: Si le joueur à Tokyo est éliminé, l'attaquant prend sa place.
                     leaveTokyo(playerInTokyo, attacker)
                     checkGameOver()
                     return true
                 }
-                if (it.isHuman) {
+                if (playerInTokyo.isHuman) { // CORRECTION: it -> playerInTokyo
                     gameState = GameState.AWAITING_TOKYO_CHOICE
-                    onTokyoChoice(it, attacker)
+                    onTokyoChoice(playerInTokyo, attacker)
                     return false
                 } else {
-                    if (it.health < 5) {
-                        leaveTokyo(it, attacker)
+                    if (playerInTokyo.health < 5) { // CORRECTION: it -> playerInTokyo
+                        leaveTokyo(playerInTokyo, attacker)
                     }
                     return true
                 }
