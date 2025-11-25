@@ -7,5 +7,5 @@ data class Player(
     var health: Int = monster.healthPoints,
     var victoryPoints: Int = monster.victoryPoints,
     var energy: Int = 0,
-    var powers: MutableList<Card> = mutableListOf()
+    val cards: MutableList<Card> = mutableListOf() // L'inventaire des cartes du joueur
 )

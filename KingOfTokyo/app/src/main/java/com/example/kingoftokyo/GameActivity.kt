@@ -3,7 +3,6 @@ package com.example.kingoftokyo
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -15,12 +14,13 @@ class GameActivity : AppCompatActivity() {
     private lateinit var dicePopupManager: DicePopupManager
     private lateinit var tokyoChoicePopupManager: TokyoChoicePopupManager
     private lateinit var shopPopupManager: ShopPopupManager
+    private lateinit var inventoryPopupManager: InventoryPopupManager
 
     private val playerHudViews = mutableListOf<View>()
     private val playerMonsterImageViews = mutableListOf<ImageView>()
-    private lateinit var tokyoCityImageView: ImageView
+    private var tokyoCityImageView: ImageView? = null
     private lateinit var rollDiceButton: Button
-    private lateinit var viewCardsButton: Button
+    private var viewCardsButton: Button? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,12 +28,10 @@ class GameActivity : AppCompatActivity() {
 
         initViews()
 
-        // ÉTAPE 1: Initialiser les managers de popups en premier.
         dicePopupManager = DicePopupManager(this, findViewById(android.R.id.content))
         tokyoChoicePopupManager = TokyoChoicePopupManager(this, findViewById(android.R.id.content))
         shopPopupManager = ShopPopupManager(this, findViewById(android.R.id.content))
-
-        // ÉTAPE 2: Initialiser le GameManager APRÈS, pour qu'il puisse utiliser les managers.
+        
         gameManager = GameManager(
             onUpdate = { runOnUiThread { updateUI() } },
             onBotTurn = { diceResult -> runOnUiThread { dicePopupManager.showDiceForBot(diceResult) } },
@@ -42,10 +40,11 @@ class GameActivity : AppCompatActivity() {
                 runOnUiThread { promptTokyoChoice(defender, attacker) }
             },
             onShopPhase = { _, _ ->
-                // Maintenant, shopPopupManager est garanti d'être initialisé.
                 runOnUiThread { shopPopupManager.showShop(gameManager) }
             }
         )
+
+        inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
 
         val selectedMonsterName = intent.getStringExtra("selectedMonsterName") ?: GameData.monsters.first().name
         gameManager.setupGame(selectedMonsterName)
@@ -55,7 +54,12 @@ class GameActivity : AppCompatActivity() {
                 dicePopupManager.showDiceForHuman { gameManager.resolveDice(it) }
             }
         }
-        viewCardsButton.setOnClickListener { /* TODO: Afficher les cartes possédées */ }
+        
+        viewCardsButton?.setOnClickListener { 
+            if (gameManager.currentPlayer.isHuman) {
+                inventoryPopupManager.show()
+            } 
+        }
     }
 
     private fun promptTokyoChoice(defender: Player, attacker: Player) {
@@ -117,13 +121,14 @@ class GameActivity : AppCompatActivity() {
 
         val playerInTokyo = gameManager.getPlayerInTokyo()
         if (playerInTokyo != null) {
-            tokyoCityImageView.setImageResource(playerInTokyo.monster.image)
-            tokyoCityImageView.visibility = View.VISIBLE
+            tokyoCityImageView?.setImageResource(playerInTokyo.monster.image)
+            tokyoCityImageView?.visibility = View.VISIBLE
         } else {
-            tokyoCityImageView.visibility = View.INVISIBLE
+            tokyoCityImageView?.visibility = View.INVISIBLE
         }
 
         rollDiceButton.isEnabled = gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING
+        viewCardsButton?.isEnabled = gameManager.currentPlayer.isHuman
 
         if (gameManager.gameState != GameState.SHOPPING) {
             shopPopupManager.hideShop()

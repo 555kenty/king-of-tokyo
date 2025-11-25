@@ -64,9 +64,11 @@ class GameManager(
     }
 
     private fun executeBotTurn() {
-        val diceResult = List(3) { Die(DieFace.values().random()) }
-        onBotTurn(diceResult)
-        Handler(Looper.getMainLooper()).postDelayed({ resolveDice(diceResult) }, 2000)
+        val diceResult = List(DICE_COUNT) { Die(DieFace.values().random()) }
+        onBotTurn(diceResult) 
+        Handler(Looper.getMainLooper()).postDelayed({ 
+            resolveDice(diceResult)
+        }, 2000)
     }
 
     fun resolveDice(diceResult: List<Die>) {
@@ -79,12 +81,11 @@ class GameManager(
         onUpdate()
 
         val attackCount = faceCounts[DieFace.SMASH] ?: 0
-        var attackPhaseOver = true
         if (attackCount > 0) {
-            attackPhaseOver = handleAttack(currentPlayer, attackCount)
-        }
-
-        if (attackPhaseOver) {
+            if (handleAttack(currentPlayer, attackCount)) {
+                 startShoppingPhase()
+            }
+        } else {
             startShoppingPhase()
         }
     }
@@ -128,38 +129,43 @@ class GameManager(
     private fun resolveHeal(player: Player, faceCounts: Map<DieFace, Int>) {
         if (!player.isInTokyo) {
             val healCount = faceCounts[DieFace.HEART] ?: 0
-            player.health = (player.health + healCount).coerceAtMost(10)
+            player.health = (player.health + healCount).coerceAtMost(player.monster.healthPoints)
         }
     }
 
     private fun handleAttack(attacker: Player, damage: Int): Boolean {
         if (attacker.isInTokyo) {
-            players.filter { !it.isInTokyo && it.health > 0 }.forEach { it.health -= damage }
-            onUpdate()
-            checkGameOver()
-            return true
+            players.filter { !it.isInTokyo && it.health > 0 }.forEach { target ->
+                applyDamage(target, damage, attacker)
+            }
         } else {
             getPlayerInTokyo()?.let { playerInTokyo ->
-                playerInTokyo.health -= damage
-                onUpdate()
+                applyDamage(playerInTokyo, damage, attacker)
+                
                 if (playerInTokyo.health <= 0) {
                     leaveTokyo(playerInTokyo, attacker)
-                    checkGameOver()
-                    return true
-                }
-                if (playerInTokyo.isHuman) {
-                    gameState = GameState.AWAITING_TOKYO_CHOICE
-                    onTokyoChoice(playerInTokyo, attacker)
-                    return false
                 } else {
-                    if (playerInTokyo.health < 5) {
-                        leaveTokyo(playerInTokyo, attacker)
+                    if (playerInTokyo.isHuman) {
+                        gameState = GameState.AWAITING_TOKYO_CHOICE
+                        onTokyoChoice(playerInTokyo, attacker)
+                        return false
+                    } else {
+                        if (playerInTokyo.health < 5) {
+                            leaveTokyo(playerInTokyo, attacker)
+                        }
                     }
-                    return true
                 }
             }
-            return true
         }
+        onUpdate()
+        checkGameOver()
+        return true
+    }
+    
+    fun applyDamage(target: Player, damage: Int, attacker: Player) {
+        if (target.health <= 0) return
+        target.health -= damage
+        onUpdate()
     }
 
     fun playerDecidedTokyo(wantsToStay: Boolean, defender: Player, attacker: Player) {
@@ -170,9 +176,14 @@ class GameManager(
         startShoppingPhase()
     }
 
-    private fun enterTokyo(player: Player) {
+    fun enterTokyo(player: Player) {
         if (player.health <= 0) return
-        getPlayerInTokyo()?.isInTokyo = false
+        
+        val oldPlayerInTokyo = getPlayerInTokyo()
+        if (oldPlayerInTokyo != null) {
+            oldPlayerInTokyo.isInTokyo = false
+        }
+
         player.isInTokyo = true
         if (gameState != GameState.GAME_OVER) {
             player.victoryPoints += 1
@@ -215,7 +226,7 @@ class GameManager(
     private fun executeBotShopping() {
         val affordableCard = shop.filter { currentPlayer.energy >= it.cost }.maxByOrNull { it.cost }
         if (affordableCard != null) {
-            Log.d("GameManager", "${currentPlayer.monster.name} achète ${affordableCard.name}")
+            Log.d("GameManager", "Bot ${currentPlayer.monster.name} is buying ${affordableCard.name}")
             buyCard(affordableCard)
         }
         finishShopping()
@@ -224,10 +235,7 @@ class GameManager(
     fun buyCard(card: Card) {
         if (currentPlayer.energy >= card.cost) {
             currentPlayer.energy -= card.cost
-            if (card.type == CardType.POWER) {
-                currentPlayer.powers.add(card)
-            }
-            card.effect(currentPlayer, this)
+            currentPlayer.cards.add(card)
 
             val cardIndex = shop.indexOf(card)
             if (cardIndex != -1) {
@@ -249,7 +257,15 @@ class GameManager(
         }
     }
 
-    // CORRECTION FINALE : La seule responsabilité de cette fonction est de changer l'état du jeu.
+    fun useCard(card: Card) {
+        card.effect(currentPlayer, this)
+
+        if (card.type == CardType.ACTION) {
+            currentPlayer.cards.remove(card)
+        }
+        onUpdate()
+    }
+
     fun finishShopping() {
         gameState = GameState.RUNNING
         endTurn()
@@ -258,12 +274,10 @@ class GameManager(
     private fun checkGameOver() {
         val alivePlayers = players.filter { it.health > 0 }
         if (alivePlayers.size <= 1) {
-            val humanPlayer = players.find { it.isHuman }!!
-            if(humanPlayer.health > 0 || alivePlayers.isEmpty()){
-                onGameOver(humanPlayer.health > 0)
-                gameState = GameState.GAME_OVER
-                return
-            }
+            val humanIsWinner = players.find { it.isHuman }?.let { it.health > 0 } ?: (alivePlayers.isEmpty())
+            onGameOver(humanIsWinner)
+            gameState = GameState.GAME_OVER
+            return
         }
 
         val winnerByPoints = players.find { it.victoryPoints >= 20 }
@@ -271,5 +285,9 @@ class GameManager(
             onGameOver(winnerByPoints.isHuman)
             gameState = GameState.GAME_OVER
         }
+    }
+
+    companion object {
+        private const val DICE_COUNT = 3
     }
 }

@@ -3,81 +3,94 @@ package com.example.kingoftokyo
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.PopupWindow
 import android.widget.TextView
 
 class DicePopupManager(private val context: Context, private val root: ViewGroup) {
 
+    private var popupWindow: PopupWindow? = null
     private var popupView: View? = null
     private val diceImageViews = mutableListOf<ImageView>()
-    private var dice = Array(3) { Die() }
-    private var rollsLeft = 3
-
+    private var dice = Array(DICE_COUNT) { Die() }
+    private var rollsLeft = MAX_ROLLS
     private val handler = Handler(Looper.getMainLooper())
     private var onDiceResult: ((List<Die>) -> Unit)? = null
 
-    private fun ensurePopupView() {
-        if (popupView == null) {
-            val inflater = LayoutInflater.from(context)
-            popupView = inflater.inflate(R.layout.layout_dice_popup, root, false)
-
-            // Utilisation des bons IDs
-            diceImageViews.addAll(listOf(
-                popupView!!.findViewById(R.id.die1),
-                popupView!!.findViewById(R.id.die2),
-                popupView!!.findViewById(R.id.die3),
-            ))
-
-            // CORRECTION : Les listeners des boutons étaient manquants. Je les remets ici.
-            popupView?.findViewById<Button>(R.id.readyButton)?.setOnClickListener { endRollPhase() }
-            popupView?.findViewById<Button>(R.id.rerollButton)?.setOnClickListener { rollDice() }
-        }
-    }
-
     fun showDiceForHuman(onResult: (List<Die>) -> Unit) {
-        ensurePopupView()
+        createPopupView()
         this.onDiceResult = onResult
-
         popupView?.findViewById<View>(R.id.buttonsRow)?.visibility = View.VISIBLE
         diceImageViews.forEachIndexed { index, dieView ->
             dieView.setOnClickListener { onDieClicked(index) }
         }
 
         resetAndRoll()
-        if (popupView?.parent == null) {
-            root.addView(popupView)
-        }
+        showPopup()
     }
 
     fun showDiceForBot(botDice: List<Die>) {
-        ensurePopupView()
+        createPopupView()
         this.dice = botDice.toTypedArray()
         popupView?.findViewById<View>(R.id.buttonsRow)?.visibility = View.GONE
         diceImageViews.forEach { it.setOnClickListener(null) }
 
+        rollsLeft = 0
         updateUI()
-        if (popupView?.parent == null) {
-            root.addView(popupView)
-        }
+        showPopup()
 
-        handler.postDelayed({ hideDicePopup() }, 2000)
+        // Auto-fermeture après affichage du résultat bot.
+        handler.postDelayed({ hide() }, 2000)
     }
 
-    private fun resetAndRoll() {
-        rollsLeft = 3
-        dice.forEach { it.isLocked = true } // On sélectionne tout pour le 1er lancer
-        rollDice()
+    private fun createPopupView() {
+        val inflater = LayoutInflater.from(context)
+        popupView = inflater.inflate(R.layout.layout_dice_popup, null)
+
+        diceImageViews.clear()
+        popupView?.let { view ->
+            diceImageViews.addAll(listOf(
+                view.findViewById(R.id.die1),
+                view.findViewById(R.id.die2),
+                view.findViewById(R.id.die3),
+            ))
+
+            view.findViewById<Button>(R.id.readyButton)?.setOnClickListener { endRollPhase() }
+            view.findViewById<Button>(R.id.rerollButton)?.setOnClickListener { rollDice() }
+        }
+    }
+
+    private fun showPopup() {
+        popupView?.let { view ->
+            if (popupWindow?.isShowing == true) {
+                popupWindow?.dismiss()
+            }
+            popupWindow = PopupWindow(
+                view,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            popupWindow?.isFocusable = true
+            popupWindow?.showAtLocation(root, Gravity.CENTER, 0, 0)
+        }
     }
 
     private fun onDieClicked(index: Int) {
-        if (rollsLeft < 3) {
+        if (rollsLeft < MAX_ROLLS) {
             dice[index].isLocked = !dice[index].isLocked
             updateUI()
         }
+    }
+
+    private fun resetAndRoll() {
+        rollsLeft = MAX_ROLLS
+        dice.forEach { it.isLocked = true } // Tout relancer au premier lancer
+        rollDice()
     }
 
     private fun rollDice() {
@@ -103,7 +116,7 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
                             die.face = DieFace.values().random()
                             die.isLocked = false
                         } else {
-                            diceImageViews[index].setImageResource(DieFace.values().random().drawableId)
+                            diceImageViews.getOrNull(index)?.setImageResource(DieFace.values().random().drawableId)
                         }
                     }
                 }
@@ -123,28 +136,32 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
     }
 
     private fun endRollPhase() {
-        if (popupView?.parent != null) {
+        if (popupWindow?.isShowing == true) {
             onDiceResult?.invoke(dice.toList())
-            hideDicePopup()
+            hide()
         }
     }
 
     private fun updateUI() {
         dice.forEachIndexed { index, die ->
-            diceImageViews[index].setImageResource(die.face.drawableId)
-            diceImageViews[index].isSelected = die.isLocked
+            diceImageViews.getOrNull(index)?.setImageResource(die.face.drawableId)
+            diceImageViews.getOrNull(index)?.isSelected = die.isLocked
         }
 
         popupView?.findViewById<TextView>(R.id.rollInfoTextView)?.text = "Lancers restants : $rollsLeft"
         popupView?.findViewById<Button>(R.id.rerollButton)?.isEnabled = rollsLeft > 0 && dice.any { it.isLocked }
-        popupView?.findViewById<Button>(R.id.readyButton)?.isEnabled = rollsLeft < 3
+        popupView?.findViewById<Button>(R.id.readyButton)?.isEnabled = rollsLeft < MAX_ROLLS
     }
 
-    private fun hideDicePopup() {
-        popupView?.let {
-            if (it.parent != null) {
-                root.removeView(it)
-            }
-        }
+    private fun hide() {
+        popupWindow?.dismiss()
+        popupWindow = null
+        popupView = null
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    companion object {
+        private const val DICE_COUNT = 3
+        private const val MAX_ROLLS = 3
     }
 }

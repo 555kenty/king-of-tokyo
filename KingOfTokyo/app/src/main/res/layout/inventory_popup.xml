@@ -34,8 +34,7 @@
         <!-- ScrollView pour les cartes -->
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_height="229dp">
 
             <LinearLayout
                 android:id="@+id/inventoryCardsContainer"
@@ -45,47 +44,7 @@
                 android:orientation="horizontal"
                 android:padding="12dp">
 
-                <!-- Exemple d’inclusion : tu vas en ajouter dynamiquement via code -->
-                <!-- <include layout="@layout/card_item"/> -->
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card2"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card3"
-                    layout="@layout/card_item" />
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
-                <include
-                    android:id="@+id/card1"
-                    layout="@layout/card_item" />
-
+                <!-- Le contenu sera ajouté dynamiquement ici -->
 
             </LinearLayout>
         </ScrollView>
