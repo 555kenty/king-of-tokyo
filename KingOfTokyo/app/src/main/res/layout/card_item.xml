@@ -1,56 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="#333333"
-    app:cardCornerRadius="8dp">
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="8dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp">
-
-        <TextView
-            android:id="@+id/cardName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            tools:text="Rage Bestiale" />
-
-        <TextView
-            android:id="@+id/cardCost"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textColor="@color/yellow_energy"
-            android:textSize="14sp"
-            tools:text="Coût: 4⚡" />
-
-        <TextView
-            android:id="@+id/cardDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:minHeight="60dp"
-            android:textColor="#CCCCCC"
-            android:textSize="12sp"
-            tools:text="Chaque 👊 inflige +1 dégât supplémentaire." />
-
-        <Button
-            android:id="@+id/buyButton"
-            style="@style/Widget.App.Button.MainMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="ACHETER" />
-
-    </LinearLayout>
-
+    <ImageView
+        android:id="@+id/cardImage"
+        android:layout_width="150dp"
+        android:layout_height="225dp"
+        android:adjustViewBounds="true"
+        android:background="#000000"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/carte_coeur_atomique" />
 </androidx.cardview.widget.CardView>

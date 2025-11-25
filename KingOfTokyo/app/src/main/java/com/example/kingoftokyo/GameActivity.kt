@@ -14,11 +14,13 @@ class GameActivity : AppCompatActivity() {
     private lateinit var gameManager: GameManager
     private lateinit var dicePopupManager: DicePopupManager
     private lateinit var tokyoChoicePopupManager: TokyoChoicePopupManager
+    private lateinit var shopPopupManager: ShopPopupManager
 
     private val playerHudViews = mutableListOf<View>()
     private val playerMonsterImageViews = mutableListOf<ImageView>()
     private lateinit var tokyoCityImageView: ImageView
     private lateinit var rollDiceButton: Button
+    private lateinit var viewCardsButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,28 +28,34 @@ class GameActivity : AppCompatActivity() {
 
         initViews()
 
+        // ÉTAPE 1: Initialiser les managers de popups en premier.
         dicePopupManager = DicePopupManager(this, findViewById(android.R.id.content))
         tokyoChoicePopupManager = TokyoChoicePopupManager(this, findViewById(android.R.id.content))
+        shopPopupManager = ShopPopupManager(this, findViewById(android.R.id.content))
 
+        // ÉTAPE 2: Initialiser le GameManager APRÈS, pour qu'il puisse utiliser les managers.
         gameManager = GameManager(
             onUpdate = { runOnUiThread { updateUI() } },
             onBotTurn = { diceResult -> runOnUiThread { dicePopupManager.showDiceForBot(diceResult) } },
             onGameOver = { playerWon -> runOnUiThread { launchGameOverScreen(playerWon) } },
             onTokyoChoice = { defender, attacker ->
                 runOnUiThread { promptTokyoChoice(defender, attacker) }
+            },
+            onShopPhase = { _, _ ->
+                // Maintenant, shopPopupManager est garanti d'être initialisé.
+                runOnUiThread { shopPopupManager.showShop(gameManager) }
             }
         )
 
         val selectedMonsterName = intent.getStringExtra("selectedMonsterName") ?: GameData.monsters.first().name
         gameManager.setupGame(selectedMonsterName)
 
-        rollDiceButton.setOnClickListener {
-            if (gameManager.getCurrentPlayer().isHuman && gameManager.gameState == GameState.RUNNING) {
-                dicePopupManager.showDiceForHuman {
-                    gameManager.resolveDice(it)
-                }
+        rollDiceButton.setOnClickListener { 
+            if (gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING) {
+                dicePopupManager.showDiceForHuman { gameManager.resolveDice(it) }
             }
         }
+        viewCardsButton.setOnClickListener { /* TODO: Afficher les cartes possédées */ }
     }
 
     private fun promptTokyoChoice(defender: Player, attacker: Player) {
@@ -78,6 +86,7 @@ class GameActivity : AppCompatActivity() {
         ))
         tokyoCityImageView = findViewById(R.id.tokyo_city)
         rollDiceButton = findViewById(R.id.rollDiceButton)
+        viewCardsButton = findViewById(R.id.view_cards_button)
     }
 
     private fun updateUI() {
@@ -87,7 +96,6 @@ class GameActivity : AppCompatActivity() {
             val hud = playerHudViews[index]
             val monsterImage = playerMonsterImageViews[index]
 
-            // CORRECTION : Ligne manquante pour afficher l'image du monstre
             monsterImage.setImageResource(player.monster.image)
 
             if (player.health <= 0) {
@@ -100,7 +108,7 @@ class GameActivity : AppCompatActivity() {
             hud.findViewById<TextView>(R.id.monsterEnergy).text = getString(R.string.energy_format, player.energy)
             hud.findViewById<TextView>(R.id.monsterVictoryPoints).text = getString(R.string.victory_points_format, player.victoryPoints)
 
-            if (player == gameManager.getCurrentPlayer()) {
+            if (player == gameManager.currentPlayer) {
                 hud.setBackgroundResource(R.drawable.player_hud_active_background)
             } else {
                 hud.background = null
@@ -115,6 +123,10 @@ class GameActivity : AppCompatActivity() {
             tokyoCityImageView.visibility = View.INVISIBLE
         }
 
-        rollDiceButton.isEnabled = gameManager.getCurrentPlayer().isHuman && gameManager.gameState == GameState.RUNNING
+        rollDiceButton.isEnabled = gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING
+
+        if (gameManager.gameState != GameState.SHOPPING) {
+            shopPopupManager.hideShop()
+        }
     }
 }
