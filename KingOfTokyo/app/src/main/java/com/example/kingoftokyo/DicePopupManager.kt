@@ -14,50 +14,66 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
 
     private var popupView: View? = null
     private val diceImageViews = mutableListOf<ImageView>()
-    private val dice = Array(3) { Die() } // On gère 3 dés
+    private var dice = Array(3) { Die() }
     private var rollsLeft = 3
 
     private val handler = Handler(Looper.getMainLooper())
+    private var onDiceResult: ((List<Die>) -> Unit)? = null
 
-    fun showDicePopup() {
+    private fun ensurePopupView() {
         if (popupView == null) {
             val inflater = LayoutInflater.from(context)
             popupView = inflater.inflate(R.layout.layout_dice_popup, root, false)
 
-            // CORRECTION 1 : Utilisation des bons IDs (die1View, etc.)
+            // Utilisation des bons IDs
             diceImageViews.addAll(listOf(
                 popupView!!.findViewById(R.id.die1),
                 popupView!!.findViewById(R.id.die2),
-                popupView!!.findViewById(R.id.die3 ),
+                popupView!!.findViewById(R.id.die3),
             ))
 
-            diceImageViews.forEachIndexed { index, dieView ->
-                dieView.setOnClickListener { onDieClicked(index) }
-            }
+            // CORRECTION : Les listeners des boutons étaient manquants. Je les remets ici.
+            popupView?.findViewById<Button>(R.id.readyButton)?.setOnClickListener { endRollPhase() }
+            popupView?.findViewById<Button>(R.id.rerollButton)?.setOnClickListener { rollDice() }
+        }
+    }
 
-            popupView?.findViewById<Button>(R.id.readyButton)?.setOnClickListener {
-                // La logique pour appliquer les résultats ira ici
-                hideDicePopup()
-            }
+    fun showDiceForHuman(onResult: (List<Die>) -> Unit) {
+        ensurePopupView()
+        this.onDiceResult = onResult
 
-            popupView?.findViewById<Button>(R.id.rerollButton)?.setOnClickListener {
-                rollDice()
-            }
+        popupView?.findViewById<View>(R.id.buttonsRow)?.visibility = View.VISIBLE
+        diceImageViews.forEachIndexed { index, dieView ->
+            dieView.setOnClickListener { onDieClicked(index) }
         }
 
         resetAndRoll()
-        root.addView(popupView)
+        if (popupView?.parent == null) {
+            root.addView(popupView)
+        }
+    }
+
+    fun showDiceForBot(botDice: List<Die>) {
+        ensurePopupView()
+        this.dice = botDice.toTypedArray()
+        popupView?.findViewById<View>(R.id.buttonsRow)?.visibility = View.GONE
+        diceImageViews.forEach { it.setOnClickListener(null) }
+
+        updateUI()
+        if (popupView?.parent == null) {
+            root.addView(popupView)
+        }
+
+        handler.postDelayed({ hideDicePopup() }, 2000)
     }
 
     private fun resetAndRoll() {
         rollsLeft = 3
-        // Pour le premier lancer, on "sélectionne" tous les dés pour qu'ils soient tous relancés
-        dice.forEach { it.isLocked = true }
+        dice.forEach { it.isLocked = true } // On sélectionne tout pour le 1er lancer
         rollDice()
     }
 
     private fun onDieClicked(index: Int) {
-        // On ne peut sélectionner un dé qu'après le premier lancer
         if (rollsLeft < 3) {
             dice[index].isLocked = !dice[index].isLocked
             updateUI()
@@ -65,7 +81,6 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
     }
 
     private fun rollDice() {
-        // On ne peut relancer que s'il reste des lancers ET si au moins un dé est sélectionné
         if (rollsLeft > 0 && dice.any { it.isLocked }) {
             rollsLeft--
             animateDiceRoll()
@@ -83,11 +98,10 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
                 val isAnimationOver = elapsedTime >= animationDuration
 
                 dice.forEachIndexed { index, die ->
-                    // CORRECTION 2 : On relance le dé uniquement s'il est sélectionné (isLocked)
                     if (die.isLocked) {
                         if (isAnimationOver) {
                             die.face = DieFace.values().random()
-                            die.isLocked = false // Le dé est désélectionné après la relance
+                            die.isLocked = false
                         } else {
                             diceImageViews[index].setImageResource(DieFace.values().random().drawableId)
                         }
@@ -96,6 +110,9 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
 
                 if (isAnimationOver) {
                     updateUI()
+                    if (rollsLeft == 0) {
+                        handler.postDelayed({ endRollPhase() }, 1500)
+                    }
                 } else {
                     handler.postDelayed(this, 1000L / frameRate)
                 }
@@ -105,6 +122,13 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
         handler.post(updateRunnable)
     }
 
+    private fun endRollPhase() {
+        if (popupView?.parent != null) {
+            onDiceResult?.invoke(dice.toList())
+            hideDicePopup()
+        }
+    }
+
     private fun updateUI() {
         dice.forEachIndexed { index, die ->
             diceImageViews[index].setImageResource(die.face.drawableId)
@@ -112,18 +136,15 @@ class DicePopupManager(private val context: Context, private val root: ViewGroup
         }
 
         popupView?.findViewById<TextView>(R.id.rollInfoTextView)?.text = "Lancers restants : $rollsLeft"
-
-        val rerollButton = popupView?.findViewById<Button>(R.id.rerollButton)
-        rerollButton?.isEnabled = rollsLeft > 0
-
-        if (rollsLeft == 0) {
-            handler.postDelayed({ hideDicePopup() }, 2000)
-        }
+        popupView?.findViewById<Button>(R.id.rerollButton)?.isEnabled = rollsLeft > 0 && dice.any { it.isLocked }
+        popupView?.findViewById<Button>(R.id.readyButton)?.isEnabled = rollsLeft < 3
     }
 
-    fun hideDicePopup() {
+    private fun hideDicePopup() {
         popupView?.let {
-            root.removeView(it)
+            if (it.parent != null) {
+                root.removeView(it)
+            }
         }
     }
 }
