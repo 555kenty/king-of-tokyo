@@ -3,6 +3,7 @@ package com.example.kingoftokyo
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
@@ -22,7 +23,10 @@ class CharacterSelectionActivity : AppCompatActivity() {
 
         val columns = resources.getInteger(R.integer.character_grid_columns)
         monstersRecyclerView.layoutManager = GridLayoutManager(this, columns)
-
+        val backButton = findViewById<ImageButton>(R.id.backButton)
+        backButton.setOnClickListener {
+            finish()  // retourne à MainActivity automatiquement
+        }
         val adapter = MonsterAdapter(GameData.monsters) { monster ->
             selectedMonster = monster
             playGameButton.isEnabled = true

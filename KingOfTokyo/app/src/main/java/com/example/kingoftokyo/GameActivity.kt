@@ -10,18 +10,20 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
-import android.widget.Toast
 import kotlin.math.sign
 
 class GameActivity : AppCompatActivity() {
 
+
+    private var isPausedGame: Boolean = false
+    private lateinit var pauseMenu: View
     private lateinit var gameManager: GameManager
     private lateinit var dicePopupManager: DicePopupManager
     private lateinit var tokyoChoicePopupManager: TokyoChoicePopupManager
@@ -44,6 +46,49 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
 
+        // === PAUSE MENU ===
+        val pauseButton = findViewById<ImageButton>(R.id.btnPause)
+
+        pauseMenu = layoutInflater.inflate(R.layout.pause_menu, null)
+        pauseMenu.visibility = View.GONE
+
+        addContentView(
+            pauseMenu,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+
+        pauseButton.setOnClickListener {
+            isPausedGame = true
+            pauseMenu.visibility = View.VISIBLE
+        }
+
+        pauseMenu.findViewById<Button>(R.id.btnResume).setOnClickListener {
+            isPausedGame = false
+            pauseMenu.visibility = View.GONE
+        }
+
+
+        pauseMenu.findViewById<Button>(R.id.btnRestart).setOnClickListener {
+
+            val monsterName = intent.getStringExtra("selectedMonsterName")
+                ?: GameData.monsters.first().name
+
+            val restartIntent = Intent(this, GameActivity::class.java)
+            restartIntent.putExtra("selectedMonsterName", monsterName)
+
+            finish()
+            startActivity(restartIntent)
+        }
+
+
+        pauseMenu.findViewById<Button>(R.id.btnQuit).setOnClickListener {
+            finish()
+        }
+
+        // === INIT DU RESTE ===
         initSounds()
         initViews()
 
@@ -52,31 +97,84 @@ class GameActivity : AppCompatActivity() {
         shopPopupManager = ShopPopupManager(this, findViewById(android.R.id.content))
 
         gameManager = GameManager(
-            onUpdate = { runOnUiThread { updateUI() } },
-            onBotTurn = { diceResult -> runOnUiThread { dicePopupManager.showDiceForBot(diceResult) } },
-            onGameOver = { playerWon -> runOnUiThread { launchGameOverScreen(playerWon) } },
+            onUpdate = {
+                runOnUiThread {
+                    if (!isPausedGame) updateUI()
+                }
+            },
+            onBotTurn = { diceResult ->
+                runOnUiThread {
+                    if (!isPausedGame) dicePopupManager.showDiceForBot(diceResult)
+                }
+            },
+            onGameOver = { playerWon ->
+                runOnUiThread {
+                    // même en pause, on veut quand même finir proprement
+                    launchGameOverScreen(playerWon)
+                }
+            },
             onTokyoChoice = { defender, attacker ->
-                runOnUiThread { promptTokyoChoice(defender, attacker) }
+                runOnUiThread {
+                    if (!isPausedGame) promptTokyoChoice(defender, attacker)
+                }
             },
             onShopPhase = { _, _ ->
-                runOnUiThread { shopPopupManager.showShop(gameManager) }
+                runOnUiThread {
+                    if (!isPausedGame) shopPopupManager.showShop(gameManager)
+                }
             },
-            onDamageVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = false) } },
-            onHealVisual = { targets -> runOnUiThread { flashTargets(targets, isHeal = true) } },
-            onEnergyVisual = { pairs -> runOnUiThread { showEnergyDeltas(pairs) } },
-            onCardUsed = { player, card -> runOnUiThread { showBotCardBanner(player, card) } },
-            onTargetRequest = { candidates, callback -> runOnUiThread { promptTargetSelection(candidates, callback) } },
-            onTeleportRequest = { player, enter, exit -> runOnUiThread { promptTeleportChoice(player, enter, exit) } },
-            // NOUVEAU : Jouer les bruitages
-            onPlaySound = { event -> playSound(event) }
+            onDamageVisual = { targets ->
+                runOnUiThread {
+                    if (!isPausedGame) flashTargets(targets, isHeal = false)
+                }
+            },
+            onHealVisual = { targets ->
+                runOnUiThread {
+                    if (!isPausedGame) flashTargets(targets, isHeal = true)
+                }
+            },
+            onEnergyVisual = { pairs ->
+                runOnUiThread {
+                    if (!isPausedGame) showEnergyDeltas(pairs)
+                }
+            },
+            onCardUsed = { player, card ->
+                runOnUiThread {
+                    if (!isPausedGame) showBotCardBanner(player, card)
+                }
+            },
+            onTargetRequest = { candidates, callback ->
+                runOnUiThread {
+                    if (!isPausedGame) {
+                        promptTargetSelection(candidates, callback)
+                    } else {
+                        // si jamais le manager attend une réponse, on annule proprement
+                        callback(null)
+                    }
+                }
+            },
+            onTeleportRequest = { player, enter, exit ->
+                runOnUiThread {
+                    if (!isPausedGame) {
+                        promptTeleportChoice(player, enter, exit)
+                    }
+                }
+            },
+            onPlaySound = { event ->
+                if (!isPausedGame) playSound(event)
+            }
         )
+
 
         inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
 
-        val selectedMonsterName = intent.getStringExtra("selectedMonsterName") ?: GameData.monsters.first().name
+        val selectedMonsterName = intent.getStringExtra("selectedMonsterName")
+            ?: GameData.monsters.first().name
+
         gameManager.setupGame(selectedMonsterName)
 
         rollDiceButton.setOnClickListener {
+            if (isPausedGame) return@setOnClickListener
             if (gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING) {
                 playSound(SoundEvent.DICE_ROLL)
                 dicePopupManager.showDiceForHuman { gameManager.resolveDice(it) }
@@ -84,6 +182,7 @@ class GameActivity : AppCompatActivity() {
         }
 
         viewCardsButton?.setOnClickListener {
+            if (isPausedGame) return@setOnClickListener
             if (gameManager.currentPlayer.isHuman) {
                 inventoryPopupManager.show()
             }
@@ -101,7 +200,6 @@ class GameActivity : AppCompatActivity() {
             .setAudioAttributes(audioAttributes)
             .build()
 
-        // CHARGEMENT AVEC SÉCURITÉ (Try/Catch si fichier manquant)
         try {
             soundMap[SoundEvent.DICE_ROLL] = soundPool.load(this, R.raw.dice_roll, 1)
             soundMap[SoundEvent.ATTACK] = soundPool.load(this, R.raw.attack, 1)
@@ -109,7 +207,6 @@ class GameActivity : AppCompatActivity() {
             soundMap[SoundEvent.GAME_OVER] = soundPool.load(this, R.raw.game_over, 1)
             soundMap[SoundEvent.VICTORY] = soundPool.load(this, R.raw.victory, 1)
 
-            // Musique de fond
             gameMusicPlayer = MediaPlayer.create(this, R.raw.game_bgm)
             gameMusicPlayer?.setVolume(0.3f, 0.3f)
             gameMusicPlayer?.isLooping = true
@@ -176,6 +273,8 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun updateUI() {
+        if (isPausedGame) return
+        if (gameManager.gameState == GameState.PAUSED) return
         if (gameManager.gameState == GameState.GAME_OVER) return
 
         gameManager.players.forEachIndexed { index, player ->
@@ -190,9 +289,12 @@ class GameActivity : AppCompatActivity() {
                 hud.alpha = 1.0f
             }
             hud.findViewById<TextView>(R.id.monsterName).text = player.monster.name
-            hud.findViewById<TextView>(R.id.monsterHealth).text = getString(R.string.health_format, player.health)
-            hud.findViewById<TextView>(R.id.monsterEnergy).text = getString(R.string.energy_format, player.energy)
-            hud.findViewById<TextView>(R.id.monsterVictoryPoints).text = getString(R.string.victory_points_format, player.victoryPoints)
+            hud.findViewById<TextView>(R.id.monsterHealth).text =
+                getString(R.string.health_format, player.health)
+            hud.findViewById<TextView>(R.id.monsterEnergy).text =
+                getString(R.string.energy_format, player.energy)
+            hud.findViewById<TextView>(R.id.monsterVictoryPoints).text =
+                getString(R.string.victory_points_format, player.victoryPoints)
 
             if (player == gameManager.currentPlayer) {
                 hud.setBackgroundResource(R.drawable.player_hud_active_background)
@@ -209,7 +311,8 @@ class GameActivity : AppCompatActivity() {
             tokyoCityImageView?.visibility = View.INVISIBLE
         }
 
-        rollDiceButton.isEnabled = gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING
+        rollDiceButton.isEnabled =
+            gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING
         viewCardsButton?.isEnabled = gameManager.currentPlayer.isHuman
 
         if (gameManager.gameState != GameState.SHOPPING) {
@@ -304,7 +407,8 @@ class GameActivity : AppCompatActivity() {
         overlayView.setBackgroundColor(0xAA000000.toInt())
         val panel = layoutInflater.inflate(R.layout.effect_overlay_panel, overlayView, false)
         panel.findViewById<TextView>(R.id.effectTitle).text = title
-        panel.findViewById<TextView>(R.id.effectSubtitle).text = gameManager.currentPlayer.monster.name
+        panel.findViewById<TextView>(R.id.effectSubtitle).text =
+            gameManager.currentPlayer.monster.name
         panel.findViewById<TextView>(R.id.effectDescription).text = desc
         val params = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -336,7 +440,15 @@ class GameActivity : AppCompatActivity() {
                 val view = playerHudViews[idx]
                 val label = TextView(this).apply {
                     text = if (delta > 0) "+$delta ⚡" else "$delta ⚡"
-                    setTextColor(if (delta > 0) ContextCompat.getColor(this@GameActivity, android.R.color.holo_green_light) else ContextCompat.getColor(this@GameActivity, android.R.color.holo_red_light))
+                    setTextColor(
+                        if (delta > 0) ContextCompat.getColor(
+                            this@GameActivity,
+                            android.R.color.holo_green_light
+                        ) else ContextCompat.getColor(
+                            this@GameActivity,
+                            android.R.color.holo_red_light
+                        )
+                    )
                     textSize = 14f
                 }
                 val overlayView = effectOverlay as ViewGroup
@@ -364,7 +476,10 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    private fun promptTargetSelection(candidates: List<Player>, onSelected: (Player?) -> Unit) {
+    private fun promptTargetSelection(
+        candidates: List<Player>,
+        onSelected: (Player?) -> Unit
+    ) {
         val names = candidates.map { it.monster.name }.toTypedArray()
         AlertDialog.Builder(this)
             .setTitle("Choisir une cible")
@@ -376,7 +491,11 @@ class GameActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun promptTeleportChoice(player: Player, onEnterTokyo: () -> Unit, onExitTokyo: () -> Unit) {
+    private fun promptTeleportChoice(
+        player: Player,
+        onEnterTokyo: () -> Unit,
+        onExitTokyo: () -> Unit
+    ) {
         val options = if (player.isInTokyo) {
             arrayOf("Rester dans Tokyo", "Quitter Tokyo")
         } else {
@@ -387,9 +506,9 @@ class GameActivity : AppCompatActivity() {
             .setItems(options) { dialog, which ->
                 dialog.dismiss()
                 if (player.isInTokyo) {
-                    if (which == 1) onExitTokyo() // Quitter
+                    if (which == 1) onExitTokyo()
                 } else {
-                    if (which == 0) onEnterTokyo() // Entrer
+                    if (which == 0) onEnterTokyo()
                 }
             }
             .setOnCancelListener { onExitTokyo() }
@@ -401,10 +520,16 @@ class GameActivity : AppCompatActivity() {
         val banner = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(24, 16, 24, 16)
-            background = ContextCompat.getDrawable(this@GameActivity, R.drawable.button_main_menu)
+            background =
+                ContextCompat.getDrawable(this@GameActivity, R.drawable.button_main_menu)
             val text = TextView(this@GameActivity).apply {
                 this.text = "${player.monster.name} utilise ${card.name}"
-                setTextColor(ContextCompat.getColor(this@GameActivity, android.R.color.white))
+                setTextColor(
+                    ContextCompat.getColor(
+                        this@GameActivity,
+                        android.R.color.white
+                    )
+                )
                 textSize = 16f
             }
             addView(text)

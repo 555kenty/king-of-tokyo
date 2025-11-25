@@ -7,6 +7,19 @@
     android:background="@color/dark_background"
     tools:context=".CharacterSelectionActivity">
 
+    <!-- BACK BUTTON -->
+    <ImageButton
+        android:id="@+id/backButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:padding="8dp"
+        android:src="@drawable/ic_back_arrow"
+        android:tint="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_margin="12dp" />
+
     <!-- TITLE -->
     <TextView
         android:id="@+id/titleTextView"

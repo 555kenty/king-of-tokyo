@@ -127,6 +127,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Effets actifs -->
+
     <ImageView
         android:id="@+id/tokyo_city"
         android:layout_width="wrap_content"
@@ -136,23 +138,23 @@
         app:layout_constraintHorizontal_bias="0.499"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.448"
+        app:layout_constraintVertical_bias="0.267"
         app:srcCompat="@drawable/ic_launcher_foreground" />
 
-    <!-- Effets actifs -->
+    <!-- Overlay effet global -->
     <LinearLayout
         android:id="@+id/activeEffectsContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#66000000"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:background="#66000000"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.499"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintHorizontal_bias="0.5" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Overlay effet global -->
     <FrameLayout
         android:id="@+id/effectOverlay"
         android:layout_width="match_parent"
@@ -161,5 +163,19 @@
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true"/>
+
+    <ImageButton
+        android:id="@+id/btnPause"
+        android:layout_width="74dp"
+        android:layout_height="64dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_pause"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="-9dp"
+        tools:layout_editor_absoluteY="0dp" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

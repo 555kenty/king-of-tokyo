@@ -8,7 +8,8 @@ enum class GameState {
     RUNNING,
     AWAITING_TOKYO_CHOICE,
     SHOPPING,
-    GAME_OVER
+    GAME_OVER,
+    PAUSED
 }
 
 
