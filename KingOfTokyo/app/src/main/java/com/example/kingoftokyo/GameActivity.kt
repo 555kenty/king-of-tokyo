@@ -78,7 +78,6 @@ class GameActivity : AppCompatActivity() {
 
         rollDiceButton.setOnClickListener {
             if (gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING) {
-                // NOUVEAU : Bruitage clic
                 playSound(SoundEvent.DICE_ROLL)
                 dicePopupManager.showDiceForHuman { gameManager.resolveDice(it) }
             }
@@ -112,6 +111,7 @@ class GameActivity : AppCompatActivity() {
 
             // Musique de fond
             gameMusicPlayer = MediaPlayer.create(this, R.raw.game_bgm)
+            gameMusicPlayer?.setVolume(0.3f, 0.3f)
             gameMusicPlayer?.isLooping = true
             gameMusicPlayer?.start()
         } catch (e: Exception) {
