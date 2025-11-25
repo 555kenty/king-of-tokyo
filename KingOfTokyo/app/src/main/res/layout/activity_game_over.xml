@@ -31,18 +31,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/playAgainButton"
-            style="@style/Widget.App.Button.MainMenu"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
+            android:background="@drawable/button_main_menu"
             android:layout_marginBottom="16dp"
+            android:textColor="@color/white"
             android:text="SÉLECTION DES PERSONNAGES" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/quitButton"
-            style="@style/Widget.App.Button.MainMenu"
+            android:background="@drawable/button_main_menu"
             android:layout_width="300dp"
+            android:textColor="@color/white"
             android:layout_height="wrap_content"
             android:text="QUITTER" />
     </LinearLayout>

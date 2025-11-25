@@ -12,6 +12,21 @@
     <!-- MONSTERS & HUDS -->
 
     <!-- Player 1 (Top Left) -->
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/view_cards_button"
+        android:layout_width="158dp"
+        android:layout_height="33dp"
+        android:background="@drawable/button_main_menu"
+        android:text="@string/shop"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.972"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ImageView
         android:id="@+id/monsterImage1"
         android:layout_width="120dp"

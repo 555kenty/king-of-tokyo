@@ -8,6 +8,7 @@
     <!-- Game Screen -->
     <string name="tokyo_city">TOKYO CITY</string>
     <string name="roll_dice">LANCER LES DÉS</string>
+    <string name="shop">VOIR LES CARTES</string>
     <string name="health_format">❤️ %d</string>
     <string name="energy_format">⚡ %d</string>
     <string name="victory_points_format">⭐ %d</string>

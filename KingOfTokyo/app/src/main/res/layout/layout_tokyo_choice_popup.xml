@@ -16,8 +16,8 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="336dp"
+            android:layout_height="match_parent"
             android:orientation="vertical"
             android:padding="24dp">
 
@@ -37,22 +37,23 @@
                 android:gravity="center"
                 android:orientation="horizontal">
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/stayButton"
-                    style="@style/Widget.App.Button.MainMenu"
                     android:layout_width="150dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
-                    android:text="RESTER" />
+                    android:background="@drawable/button_main_menu"
+                    android:text="RESTER"
+                    android:textColor="@color/white" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/leaveButton"
-                    style="@style/Widget.App.Button.MainMenu"
-                    android:layout_width="150dp"
-                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="8dp"
-                    android:text="SORTIR" />
-
+                    android:background="@drawable/button_main_menu"
+                    android:text="SORTIR"
+                    android:textColor="@color/white" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
