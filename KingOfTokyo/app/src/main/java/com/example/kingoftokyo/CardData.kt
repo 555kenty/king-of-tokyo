@@ -14,7 +14,10 @@ object CardData {
 
         // --- ACTIONS (ACTIVE) ---
         Card("Frappe Orbitale", 5, CardType.ACTION, CardCategory.ACTION, "Infligez 3 ❤️ à n’importe quel monstre.", R.drawable.carte_frappe_orbitale) { player, game ->
-            // TODO: Implémenter la sélection de la cible
+            val target = game.players.firstOrNull { it != player && it.health > 0 }
+            if (target != null) {
+                game.applyDamage(target, 3, player)
+            }
         },
         Card("Onde de Choc", 4, CardType.ACTION, CardCategory.ACTION, "Tous les autres monstres perdent 1 ❤️.", R.drawable.carte_onde_de_choc) { player, game ->
             game.players.filter { it != player }.forEach { game.applyDamage(it, 1, player) }
@@ -25,11 +28,17 @@ object CardData {
         Card("Bond Titanesque", 4, CardType.ACTION, CardCategory.ACTION, "Entrez immédiatement dans Tokyo. Gagnez 1 ⭐.", R.drawable.carte_bond_titanesque) { player, game ->
             game.enterTokyo(player)
         },
-        Card("Mutation Express", 5, CardType.ACTION, CardCategory.ACTION, "Changez un symbole d’un dé de votre choix.", R.drawable.carte_mutation_express) { _, _ ->
-            // TODO: Implémenter la sélection de dé
+        Card("Mutation Express", 5, CardType.ACTION, CardCategory.ACTION, "Changez un symbole d’un dé de votre choix.", R.drawable.carte_mutation_express) { player, _ ->
+            // Effet simplifié : bonus polyvalent (gain 1⭐ et 1⚡)
+            player.victoryPoints += 1
+            player.energy += 1
         },
         Card("Téléportation", 6, CardType.ACTION, CardCategory.ACTION, "Placez votre monstre où vous voulez (dans Tokyo ou dehors).", R.drawable.carte_teleportation) { player, game ->
-            // TODO: Implémenter la sélection de zone
+            if (player.isInTokyo) {
+                player.isInTokyo = false
+            } else {
+                game.enterTokyo(player)
+            }
         },
 
         // --- MUTATIONS (PASSIVE) ---

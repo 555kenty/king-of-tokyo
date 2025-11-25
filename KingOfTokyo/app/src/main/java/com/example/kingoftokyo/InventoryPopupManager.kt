@@ -1,6 +1,7 @@
 package com.example.kingoftokyo
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,7 +9,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 
@@ -90,6 +90,7 @@ class InventoryPopupManager(
             // On retire systématiquement la carte de l'inventaire après usage
             val wasRemoved = gameManager.useCard(cardToUse, removeFromInventory = true)
             showInventoryBanner(cardToUse)
+            showEffectOverlay(cardToUse)
             
             refreshInventory()
             selectedCard = null
@@ -146,4 +147,72 @@ class InventoryPopupManager(
             }
             .start()
     }
+
+    private fun showEffectOverlay(card: Card) {
+        val effect = resolveEffectVisual(card)
+        val overlay = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 32, 32, 32)
+            setBackgroundColor(effect.color)
+            val title = TextView(context).apply {
+                text = "Effet activé"
+                setTextColor(Color.WHITE)
+                textSize = 18f
+            }
+            val desc = TextView(context).apply {
+                text = effect.message
+                setTextColor(Color.WHITE)
+                textSize = 16f
+            }
+            addView(title)
+            addView(desc)
+            alpha = 0f
+        }
+
+        val params = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        root.addView(overlay, params)
+        overlay.animate()
+            .alpha(0.9f)
+            .setDuration(120)
+            .withEndAction {
+                overlay.animate()
+                    .alpha(0f)
+                    .setStartDelay(600)
+                    .setDuration(250)
+                    .withEndAction { root.removeView(overlay) }
+                    .start()
+            }
+            .start()
+    }
+
+    private fun resolveEffectVisual(card: Card): EffectVisual {
+        return when (card.name) {
+            "Absorption d’Énergie" -> EffectVisual("+3⚡", 0xAA43A047.toInt())
+            "Mutation Express" -> EffectVisual("+1⭐ et +1⚡", 0xAA1E88E5.toInt())
+            "Bond Titanesque" -> EffectVisual("Entre à Tokyo, +1⭐", 0xAA1E88E5.toInt())
+            "Téléportation" -> EffectVisual("Change de zone Tokyo/dehors", 0xAA7B1FA2.toInt())
+            "Frappe Orbitale" -> EffectVisual("Inflige 3❤️ à un adversaire", 0xAAF4511E.toInt())
+            "Onde de Choc" -> EffectVisual("Tous les autres perdent 1❤️", 0xAAF4511E.toInt())
+            "Propulsion" -> EffectVisual("+4⭐ en quittant Tokyo", 0xAA1E88E5.toInt())
+            "Griffes Chargées" -> EffectVisual("+1👊 hors Tokyo (passif)", 0xAAF4511E.toInt())
+            "Cœur Atomique" -> EffectVisual("+2⭐ quand tu attaques Tokyo", 0xAA1E88E5.toInt())
+            "Nano-Régénération" -> EffectVisual("+1❤️ fin de tour (passif)", 0xAA43A047.toInt())
+            "Carapace Adaptative" -> EffectVisual("+1⭐ début de tour en Tokyo", 0xAA1E88E5.toInt())
+            "Hurlement Terrifiant" -> EffectVisual("Les autres perdent 1⭐ début de tour", 0xAAF4511E.toInt())
+            "Vision Nocturne" -> EffectVisual("Attaques inévitables (passif)", 0xAA3949AB.toInt())
+            "Batterie Surchargée" -> EffectVisual("+3⚡ si tu gardes 3⚡", 0xAA43A047.toInt())
+            "Rage Primale" -> EffectVisual("+1👊 et tu restes à Tokyo", 0xAAF4511E.toInt())
+            "Sang Corrompu" -> EffectVisual("+2👊 mais -1❤️ après attaque", 0xAAF4511E.toInt())
+            "Mutation Cristalline" -> EffectVisual("+3⚡ si tu prends 3+ dégâts", 0xAA43A047.toInt())
+            "Parasite Kaiju" -> EffectVisual("Vole 1⚡ et -1❤️ pour toi", 0xAAF4511E.toInt())
+            "Mode Apocalypse" -> EffectVisual("+3👊 permanent", 0xAAF4511E.toInt())
+            "Résurrection" -> EffectVisual("Revient à 6❤️ en mourant", 0xAA43A047.toInt())
+            else -> EffectVisual("Effet appliqué", 0xAA263238.toInt())
+        }
+    }
+
+    private data class EffectVisual(val message: String, val color: Int)
 }
