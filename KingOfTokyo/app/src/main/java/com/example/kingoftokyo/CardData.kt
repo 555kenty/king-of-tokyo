@@ -5,7 +5,7 @@ object CardData {
         // --- POUVOIRS (PASSIVE) ---
         Card("Propulsion", 4, CardType.POWER, CardCategory.POUVOIR, "Lorsque vous quittez Tokyo, gagnez 4 ⭐.", R.drawable.carte_propulsion) { _, _ -> /* Effet passif géré par le GameManager */ },
         Card("Griffes Chargées", 5, CardType.POWER, CardCategory.POUVOIR, "Vos attaques infligent +1 👊 si vous êtes hors de Tokyo.", R.drawable.carte_griffe_chargees) { _, _ -> /* Effet passif géré par le GameManager */ },
-        Card("Cœur Atomique", 7, CardType.POWER, CardCategory.POUVOIR, "Lorsque vous attaquez Tokyo, gagnez 2 ⭐.", R.drawable.carte_coeur_atomique) { _, _ -> /* Effet passif géré par le GameManager */ },
+        Card("Cœur Atomique", 3, CardType.POWER, CardCategory.POUVOIR, "Lorsque vous attaquez Tokyo, gagnez 2 ⭐.", R.drawable.carte_coeur_atomique) { _, _ -> /* Effet passif géré par le GameManager */ },
         Card("Nano-Régénération", 7, CardType.POWER, CardCategory.POUVOIR, "À la fin de chaque tour, gagnez +1 ❤️ (même dans Tokyo).", R.drawable.carte_nano_regeneration) { _, _ -> /* Effet passif géré par le GameManager */ },
         Card("Carapace Adaptative", 5, CardType.POWER, CardCategory.POUVOIR, "Si vous commencez votre tour dans Tokyo, gagnez 1 ⭐ supplémentaire.", R.drawable.carte_carapace_adaptative) { _, _ -> /* Effet passif géré par le GameManager */ },
         Card("Hurlement Terrifiant", 4, CardType.POWER, CardCategory.POUVOIR, "Les autres monstres perdent 1 ⭐ au début de votre tour.", R.drawable.carte_hurlement_terrifiant) { _, _ -> /* Effet passif géré par le GameManager */ },
@@ -45,7 +45,7 @@ object CardData {
 
     val allCards: List<Card>
         get() {
-            val deck = cardModels.map { it.copy() } + cardModels.map { it.copy() }
+            val deck = cardModels.map { it.withNewId() } + cardModels.map { it.withNewId() }
             return deck.shuffled()
         }
 }

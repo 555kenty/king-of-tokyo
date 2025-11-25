@@ -204,7 +204,7 @@ class GameManager(
         shop.clear()
         repeat(3) {
             if (deck.isNotEmpty()) {
-                shop.add(deck.removeFirst())
+                shop.add(deck.removeAt(0))
             }
         }
     }
@@ -235,12 +235,17 @@ class GameManager(
     fun buyCard(card: Card) {
         if (currentPlayer.energy >= card.cost) {
             currentPlayer.energy -= card.cost
-            currentPlayer.cards.add(card)
+            val isAction = card.type == CardType.ACTION
+            if (isAction) {
+                card.effect(currentPlayer, this)
+            } else {
+                currentPlayer.cards.add(card)
+            }
 
             val cardIndex = shop.indexOf(card)
             if (cardIndex != -1) {
                 if (deck.isNotEmpty()) {
-                    shop[cardIndex] = deck.removeFirst()
+                    shop[cardIndex] = deck.removeAt(0)
                 } else {
                     shop.removeAt(cardIndex)
                 }
@@ -257,13 +262,16 @@ class GameManager(
         }
     }
 
-    fun useCard(card: Card) {
+    fun useCard(card: Card, removeFromInventory: Boolean = false): Boolean {
         card.effect(currentPlayer, this)
 
-        if (card.type == CardType.ACTION) {
+        val removed = if (removeFromInventory || card.type == CardType.ACTION) {
             currentPlayer.cards.remove(card)
+        } else {
+            false
         }
         onUpdate()
+        return removed
     }
 
     fun finishShopping() {

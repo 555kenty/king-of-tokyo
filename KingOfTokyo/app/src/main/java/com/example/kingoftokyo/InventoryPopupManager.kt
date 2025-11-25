@@ -7,8 +7,10 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 
 class InventoryPopupManager(
     private val context: Context,
@@ -41,20 +43,28 @@ class InventoryPopupManager(
         cardViews.clear()
         selectedCard = null
 
-        for (card in player.cards) {
-            val cardView = inflater.inflate(R.layout.card_item, container, false) as CardView
-            val cardImage = cardView.findViewById<ImageView>(R.id.cardImage)
-            
-            if (card.image != null) {
-                cardImage.setImageResource(card.image)
+        val cardsPerRow = 3
+        player.cards.chunked(cardsPerRow).forEach { rowCards ->
+            val row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_HORIZONTAL
             }
+            rowCards.forEach { card ->
+                val cardView = inflater.inflate(R.layout.card_item, row, false) as CardView
+                val cardImage = cardView.findViewById<ImageView>(R.id.cardImage)
+                
+                if (card.image != null) {
+                    cardImage.setImageResource(card.image)
+                }
 
-            cardView.setOnClickListener {
-                selectCard(card, cardView)
+                cardView.setOnClickListener {
+                    selectCard(card, cardView)
+                }
+
+                row.addView(cardView)
+                cardViews[card] = cardView
             }
-
-            container.addView(cardView)
-            cardViews[card] = cardView
+            container.addView(row)
         }
 
         updateButtons()
@@ -70,7 +80,6 @@ class InventoryPopupManager(
             selectedCard = null
         } else {
             selectedCard = card
-            // CORRECTION : On applique le contour en "foreground"
             clickedView.foreground = context.getDrawable(R.drawable.card_selection_border)
         }
         updateButtons()
@@ -78,20 +87,14 @@ class InventoryPopupManager(
 
     private fun useSelectedCard() {
         selectedCard?.let { cardToUse ->
-            val cardType = cardToUse.type
-
-            gameManager.useCard(cardToUse)
-            Toast.makeText(context, "Effet de ${cardToUse.name} utilisé !", Toast.LENGTH_SHORT).show()
+            // On retire systématiquement la carte de l'inventaire après usage
+            val wasRemoved = gameManager.useCard(cardToUse, removeFromInventory = true)
+            showInventoryBanner(cardToUse)
             
-            // La carte a été supprimée par le GameManager, on rafraîchit l'affichage
-            if (cardType == CardType.ACTION) {
-                refreshInventory()
-            } else {
-                // Si c'est un pouvoir, on le désélectionne simplement
-                cardViews[cardToUse]?.foreground = null
-                selectedCard = null
-                updateButtons()
-            }
+            refreshInventory()
+            selectedCard = null
+            updateButtons()
+            hide() // On ferme l'inventaire après usage
         }
     }
 
@@ -104,5 +107,43 @@ class InventoryPopupManager(
         popupView?.let { root.removeView(it) }
         popupView = null
         selectedCard = null
+    }
+
+    private fun showInventoryBanner(card: Card) {
+        val banner = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(context, R.drawable.button_main_menu)
+            val textView = TextView(context).apply {
+                text = "Effet de ${card.name} activé"
+                setTextColor(ContextCompat.getColor(context, android.R.color.white))
+                textSize = 16f
+            }
+            addView(textView)
+            alpha = 0f
+        }
+
+        val params = ViewGroup.MarginLayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = 24
+            marginStart = 24
+            marginEnd = 24
+        }
+
+        root.addView(banner, params)
+        banner.animate()
+            .alpha(1f)
+            .setDuration(150)
+            .withEndAction {
+                banner.animate()
+                    .alpha(0f)
+                    .setStartDelay(700)
+                    .setDuration(250)
+                    .withEndAction { root.removeView(banner) }
+                    .start()
+            }
+            .start()
     }
 }

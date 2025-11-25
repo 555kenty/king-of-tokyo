@@ -28,6 +28,8 @@ data class Card(
     // CORRECTION : L'effet est maintenant le dernier paramètre, ce qui corrige l'erreur de compilation
     val effect: (Player, GameManager) -> Unit = { _, _ -> }
 ) {
+    fun withNewId(): Card = copy(id = UUID.randomUUID().toString())
+
     // La présence de la lambda `effect` casse l'égalité structurelle des data class.
     // Pour garantir que `remove` fonctionne sur la bonne instance de carte dans une liste,
     // nous basons l'égalité uniquement sur l'ID unique.

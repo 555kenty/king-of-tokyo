@@ -6,8 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 
 class ShopPopupManager(
     private val context: Context,
@@ -91,17 +93,22 @@ class ShopPopupManager(
         val gm = gameManager ?: return
         
         val cardsToBuy = selectedInUI.mapIndexedNotNull { index, isSelected ->
-            if (isSelected) gm.shop.getOrNull(index) else null
+            if (isSelected) gm.shop.getOrNull(index)?.let { card -> index to card } else null
         }
 
-        val totalCost = cardsToBuy.sumOf { it.cost }
+        val totalCost = cardsToBuy.sumOf { it.second.cost }
 
         if (totalCost > gm.currentPlayer.energy) {
             Toast.makeText(context, "Pas assez d'énergie !", Toast.LENGTH_SHORT).show()
             return
         }
         
-        cardsToBuy.forEach { gm.buyCard(it) }
+        cardsToBuy.forEach { (uiIndex, card) ->
+            if (card.type == CardType.ACTION) {
+                animateActionActivation(uiIndex, card)
+            }
+            gm.buyCard(card)
+        }
 
         // Après l'achat, on met à jour l'affichage de la boutique.
         updateShopUI()
@@ -137,5 +144,63 @@ class ShopPopupManager(
         root.removeView(popupView)
         popupView = null
         gameManager = null
+    }
+
+    private fun animateActionActivation(uiIndex: Int, card: Card) {
+        cardImageViews.getOrNull(uiIndex)?.let { imageView ->
+            imageView.animate()
+                .scaleX(1.08f)
+                .scaleY(1.08f)
+                .alpha(0.85f)
+                .setDuration(120)
+                .withEndAction {
+                    imageView.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .alpha(1f)
+                        .setDuration(200)
+                        .start()
+                }
+                .start()
+        }
+        showActionBanner(card)
+    }
+
+    private fun showActionBanner(card: Card) {
+        val banner = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(24, 16, 24, 16)
+            background = ContextCompat.getDrawable(context, R.drawable.button_main_menu)
+            val textView = TextView(context).apply {
+                text = "Effet de ${card.name} activé"
+                setTextColor(ContextCompat.getColor(context, android.R.color.white))
+                textSize = 16f
+            }
+            addView(textView)
+            alpha = 0f
+        }
+
+        val params = ViewGroup.MarginLayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = 24
+            marginStart = 24
+            marginEnd = 24
+        }
+
+        root.addView(banner, params)
+        banner.animate()
+            .alpha(1f)
+            .setDuration(150)
+            .withEndAction {
+                banner.animate()
+                    .alpha(0f)
+                    .setStartDelay(700)
+                    .setDuration(250)
+                    .withEndAction { root.removeView(banner) }
+                    .start()
+            }
+            .start()
     }
 }
