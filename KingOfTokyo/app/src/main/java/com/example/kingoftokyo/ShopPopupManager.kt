@@ -196,7 +196,7 @@ class ShopPopupManager(
             .withEndAction {
                 banner.animate()
                     .alpha(0f)
-                    .setStartDelay(700)
+                    .setStartDelay(3000)
                     .setDuration(250)
                     .withEndAction { root.removeView(banner) }
                     .start()
