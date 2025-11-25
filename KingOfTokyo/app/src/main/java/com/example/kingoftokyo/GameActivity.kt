@@ -1,6 +1,9 @@
 package com.example.kingoftokyo
 
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.SoundPool
 import android.os.Bundle
 import android.view.View
 import android.view.Gravity
@@ -25,6 +28,10 @@ class GameActivity : AppCompatActivity() {
     private lateinit var shopPopupManager: ShopPopupManager
     private lateinit var inventoryPopupManager: InventoryPopupManager
 
+    private lateinit var soundPool: SoundPool
+    private val soundMap = mutableMapOf<SoundEvent, Int>()
+    private var gameMusicPlayer: MediaPlayer? = null
+
     private val playerHudViews = mutableListOf<View>()
     private val playerMonsterImageViews = mutableListOf<ImageView>()
     private lateinit var activeEffectsContainer: LinearLayout
@@ -37,12 +44,13 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
 
+        initSounds()
         initViews()
 
         dicePopupManager = DicePopupManager(this, findViewById(android.R.id.content))
         tokyoChoicePopupManager = TokyoChoicePopupManager(this, findViewById(android.R.id.content))
         shopPopupManager = ShopPopupManager(this, findViewById(android.R.id.content))
-        
+
         gameManager = GameManager(
             onUpdate = { runOnUiThread { updateUI() } },
             onBotTurn = { diceResult -> runOnUiThread { dicePopupManager.showDiceForBot(diceResult) } },
@@ -58,7 +66,9 @@ class GameActivity : AppCompatActivity() {
             onEnergyVisual = { pairs -> runOnUiThread { showEnergyDeltas(pairs) } },
             onCardUsed = { player, card -> runOnUiThread { showBotCardBanner(player, card) } },
             onTargetRequest = { candidates, callback -> runOnUiThread { promptTargetSelection(candidates, callback) } },
-            onTeleportRequest = { player, enter, exit -> runOnUiThread { promptTeleportChoice(player, enter, exit) } }
+            onTeleportRequest = { player, enter, exit -> runOnUiThread { promptTeleportChoice(player, enter, exit) } },
+            // NOUVEAU : Jouer les bruitages
+            onPlaySound = { event -> playSound(event) }
         )
 
         inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
@@ -66,17 +76,70 @@ class GameActivity : AppCompatActivity() {
         val selectedMonsterName = intent.getStringExtra("selectedMonsterName") ?: GameData.monsters.first().name
         gameManager.setupGame(selectedMonsterName)
 
-        rollDiceButton.setOnClickListener { 
+        rollDiceButton.setOnClickListener {
             if (gameManager.currentPlayer.isHuman && gameManager.gameState == GameState.RUNNING) {
+                // NOUVEAU : Bruitage clic
+                playSound(SoundEvent.DICE_ROLL)
                 dicePopupManager.showDiceForHuman { gameManager.resolveDice(it) }
             }
         }
-        
-        viewCardsButton?.setOnClickListener { 
+
+        viewCardsButton?.setOnClickListener {
             if (gameManager.currentPlayer.isHuman) {
                 inventoryPopupManager.show()
-            } 
+            }
         }
+    }
+
+    private fun initSounds() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(5)
+            .setAudioAttributes(audioAttributes)
+            .build()
+
+        // CHARGEMENT AVEC SÉCURITÉ (Try/Catch si fichier manquant)
+        try {
+            soundMap[SoundEvent.DICE_ROLL] = soundPool.load(this, R.raw.dice_roll, 1)
+            soundMap[SoundEvent.ATTACK] = soundPool.load(this, R.raw.attack, 1)
+            soundMap[SoundEvent.BUY] = soundPool.load(this, R.raw.buy, 1)
+            soundMap[SoundEvent.GAME_OVER] = soundPool.load(this, R.raw.game_over, 1)
+            soundMap[SoundEvent.VICTORY] = soundPool.load(this, R.raw.victory, 1)
+
+            // Musique de fond
+            gameMusicPlayer = MediaPlayer.create(this, R.raw.game_bgm)
+            gameMusicPlayer?.isLooping = true
+            gameMusicPlayer?.start()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun playSound(event: SoundEvent) {
+        val soundId = soundMap[event] ?: return
+        if (soundId != 0) {
+            soundPool.play(soundId, 1f, 1f, 1, 0, 1f)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        soundPool.release()
+        gameMusicPlayer?.release()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        gameMusicPlayer?.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        gameMusicPlayer?.start()
     }
 
     private fun promptTokyoChoice(defender: Player, attacker: Player) {

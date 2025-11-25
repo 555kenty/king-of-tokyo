@@ -11,6 +11,15 @@ enum class GameState {
     GAME_OVER
 }
 
+
+enum class SoundEvent {
+    DICE_ROLL,
+    ATTACK,
+    BUY,
+    GAME_OVER,
+    VICTORY
+}
+
 class GameManager(
     private val onUpdate: () -> Unit,
     private val onBotTurn: (List<Die>) -> Unit,
@@ -24,7 +33,8 @@ class GameManager(
     private val onTargetRequest: (List<Player>, (Player?) -> Unit) -> Unit = { list, cb -> cb(list.firstOrNull()) },
     private val onTeleportRequest: (Player, () -> Unit, () -> Unit) -> Unit = { player, enter, exit ->
         if (player.isInTokyo) exit() else enter()
-    }
+    },
+    private val onPlaySound: (SoundEvent) -> Unit = {}
 ) {
 
     lateinit var players: List<Player>
@@ -85,6 +95,7 @@ class GameManager(
 
     private fun executeBotTurn() {
         val diceResult = List(DICE_COUNT) { Die(DieFace.values().random()) }
+        onPlaySound(SoundEvent.DICE_ROLL)
         onBotTurn(diceResult) 
         Handler(Looper.getMainLooper()).postDelayed({ 
             resolveDice(diceResult)
@@ -169,6 +180,7 @@ class GameManager(
 
     private fun handleAttack(attacker: Player, baseDamage: Int): Boolean {
         val damage = baseDamage + attackBonus(attacker)
+        onPlaySound(SoundEvent.ATTACK)
         if (attacker.isInTokyo) {
             players.filter { !it.isInTokyo && it.health > 0 }.forEach { target ->
                 applyDamage(target, damage, attacker)
@@ -328,6 +340,7 @@ class GameManager(
     fun buyCard(card: Card) {
         if (currentPlayer.energy >= card.cost) {
             currentPlayer.energy -= card.cost
+            onPlaySound(SoundEvent.BUY)
             onEnergyVisual(listOf(currentPlayer to -card.cost))
             val isAction = card.type == CardType.ACTION
             if (isAction) {
@@ -386,6 +399,7 @@ class GameManager(
             val humanIsWinner = players.find { it.isHuman }?.let { it.health > 0 } ?: (alivePlayers.isEmpty())
             onGameOver(humanIsWinner)
             gameState = GameState.GAME_OVER
+            if (humanIsWinner) onPlaySound(SoundEvent.VICTORY) else onPlaySound(SoundEvent.GAME_OVER)
             return
         }
 
@@ -393,6 +407,7 @@ class GameManager(
         if (winnerByPoints != null) {
             onGameOver(winnerByPoints.isHuman)
             gameState = GameState.GAME_OVER
+            if (winnerByPoints.isHuman) onPlaySound(SoundEvent.VICTORY) else onPlaySound(SoundEvent.GAME_OVER)
         }
     }
 
