@@ -16,7 +16,8 @@ class GameManager(
     private val onBotTurn: (List<Die>) -> Unit,
     private val onGameOver: (Boolean) -> Unit,
     private val onTokyoChoice: (Player, Player) -> Unit,
-    private val onShopPhase: (List<Card>, Player) -> Unit
+    private val onShopPhase: (List<Card>, Player) -> Unit,
+    private val onDamageVisual: (List<Player>) -> Unit = {}
 ) {
 
     lateinit var players: List<Player>
@@ -206,6 +207,7 @@ class GameManager(
             handleResurrection(it)
         }
         handleResurrection(target)
+        onDamageVisual(listOf(target))
         onUpdate()
     }
 

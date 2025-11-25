@@ -3,10 +3,13 @@ package com.example.kingoftokyo
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class GameActivity : AppCompatActivity() {
 
@@ -18,6 +21,8 @@ class GameActivity : AppCompatActivity() {
 
     private val playerHudViews = mutableListOf<View>()
     private val playerMonsterImageViews = mutableListOf<ImageView>()
+    private lateinit var activeEffectsContainer: LinearLayout
+    private lateinit var effectOverlay: View
     private var tokyoCityImageView: ImageView? = null
     private lateinit var rollDiceButton: Button
     private var viewCardsButton: Button? = null
@@ -41,7 +46,8 @@ class GameActivity : AppCompatActivity() {
             },
             onShopPhase = { _, _ ->
                 runOnUiThread { shopPopupManager.showShop(gameManager) }
-            }
+            },
+            onDamageVisual = { targets -> runOnUiThread { flashTargets(targets) } }
         )
 
         inventoryPopupManager = InventoryPopupManager(this, findViewById(android.R.id.content), gameManager)
@@ -88,6 +94,8 @@ class GameActivity : AppCompatActivity() {
             findViewById(R.id.monsterImage3),
             findViewById(R.id.monsterImage4)
         ))
+        activeEffectsContainer = findViewById(R.id.activeEffectsContainer)
+        effectOverlay = findViewById(R.id.effectOverlay)
         tokyoCityImageView = findViewById(R.id.tokyo_city)
         rollDiceButton = findViewById(R.id.rollDiceButton)
         viewCardsButton = findViewById(R.id.view_cards_button)
@@ -133,5 +141,74 @@ class GameActivity : AppCompatActivity() {
         if (gameManager.gameState != GameState.SHOPPING) {
             shopPopupManager.hideShop()
         }
+
+        renderActiveEffects()
+    }
+
+    private fun renderActiveEffects() {
+        val container = activeEffectsContainer
+        container.removeAllViews()
+        val inflater = layoutInflater
+        val cards = gameManager.currentPlayer.cards
+        if (cards.isEmpty()) {
+            val empty = TextView(this).apply {
+                text = "Aucun effet actif"
+                setTextColor(getColor(android.R.color.white))
+                textSize = 12f
+            }
+            container.addView(empty)
+            return
+        }
+        cards.forEach { card ->
+            val chip = inflater.inflate(R.layout.active_effect_chip, container, false) as TextView
+            chip.text = card.name
+            chip.setOnClickListener { showEffectDetail(card) }
+            container.addView(chip)
+        }
+    }
+
+    private fun flashTargets(targets: List<Player>) {
+        targets.forEach { player ->
+            val idx = gameManager.players.indexOf(player)
+            if (idx in playerHudViews.indices) {
+                val view = playerHudViews[idx]
+                view.animate().cancel()
+                val originalAlpha = view.alpha
+                view.animate()
+                    .alpha(0.5f)
+                    .setDuration(80)
+                    .withEndAction {
+                        view.animate().alpha(originalAlpha).setDuration(180).start()
+                    }
+                    .start()
+            }
+        }
+    }
+
+    private fun showEffectDetail(card: Card) {
+        val overlayView = effectOverlay as ViewGroup
+        overlayView.removeAllViews()
+        overlayView.setBackgroundColor(0x99000000.toInt())
+        val panel = layoutInflater.inflate(R.layout.active_effect_chip, overlayView, false) as TextView
+        panel.text = "${card.name}\n${card.description}"
+        panel.textSize = 14f
+        panel.setPadding(16, 16, 16, 16)
+        panel.background = ContextCompat.getDrawable(this, R.drawable.button_main_menu)
+        val params = ViewGroup.MarginLayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            marginStart = 32
+            topMargin = 32
+        }
+        overlayView.addView(panel, params)
+        overlayView.visibility = View.VISIBLE
+        overlayView.setOnClickListener { hideEffectDetail() }
+    }
+
+    private fun hideEffectDetail() {
+        val overlayView = effectOverlay as ViewGroup
+        overlayView.removeAllViews()
+        overlayView.visibility = View.GONE
     }
 }
